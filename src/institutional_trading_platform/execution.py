@@ -127,3 +127,132 @@ def order_from_signal(instrument: Instrument, signal: SignalOutput, quantity: in
         limit_price=signal.entry,
         client_order_id=f"SB-{uuid4().hex}",
     )
+
+
+@dataclass(frozen=True)
+class ChildOrder:
+    """Scheduled child order for execution algorithms."""
+
+    sequence: int
+    quantity: int
+    limit_price: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.sequence < 0 or self.quantity <= 0:
+            raise ValueError("sequence must be non-negative and quantity positive")
+        if self.limit_price is not None and self.limit_price <= 0:
+            raise ValueError("limit_price must be positive when provided")
+
+
+def twap_schedule(total_quantity: int, slices: int) -> tuple[ChildOrder, ...]:
+    """Create a TWAP child-order schedule."""
+
+    if total_quantity <= 0 or slices <= 0:
+        raise ValueError("total_quantity and slices must be positive")
+    base = total_quantity // slices
+    remainder = total_quantity % slices
+    return tuple(ChildOrder(sequence, base + (1 if sequence < remainder else 0)) for sequence in range(slices) if base + (1 if sequence < remainder else 0) > 0)
+
+
+def vwap_schedule(total_quantity: int, volume_curve: tuple[float, ...]) -> tuple[ChildOrder, ...]:
+    """Create a VWAP schedule from an expected volume curve."""
+
+    if total_quantity <= 0 or not volume_curve or any(value < 0 for value in volume_curve):
+        raise ValueError("invalid VWAP inputs")
+    total_volume = sum(volume_curve)
+    if total_volume <= 0:
+        raise ValueError("volume curve must have positive mass")
+    raw = [int(total_quantity * value / total_volume) for value in volume_curve]
+    while sum(raw) < total_quantity:
+        raw[raw.index(max(raw))] += 1
+    return tuple(ChildOrder(sequence, quantity) for sequence, quantity in enumerate(raw) if quantity > 0)
+
+
+def iceberg_schedule(total_quantity: int, display_quantity: int) -> tuple[ChildOrder, ...]:
+    """Create an iceberg schedule with fixed displayed quantity."""
+
+    if total_quantity <= 0 or display_quantity <= 0:
+        raise ValueError("quantities must be positive")
+    orders = []
+    remaining = total_quantity
+    sequence = 0
+    while remaining > 0:
+        quantity = min(display_quantity, remaining)
+        orders.append(ChildOrder(sequence, quantity))
+        remaining -= quantity
+        sequence += 1
+    return tuple(orders)
+
+
+def participation_schedule(total_quantity: int, market_volumes: tuple[float, ...], participation_rate: float) -> tuple[ChildOrder, ...]:
+    """Participation algorithm constrained by market volumes."""
+
+    if total_quantity <= 0 or not 0 < participation_rate <= 1 or not market_volumes:
+        raise ValueError("invalid participation inputs")
+    child_orders = []
+    remaining = total_quantity
+    for sequence, market_volume in enumerate(market_volumes):
+        if market_volume < 0:
+            raise ValueError("market volumes cannot be negative")
+        quantity = min(remaining, int(market_volume * participation_rate))
+        if quantity > 0:
+            child_orders.append(ChildOrder(sequence, quantity))
+            remaining -= quantity
+        if remaining == 0:
+            break
+    if remaining > 0:
+        child_orders.append(ChildOrder(len(market_volumes), remaining))
+    return tuple(child_orders)
+
+
+def adaptive_execution_style(spread_bps: float, volatility: float, urgency: float) -> str:
+    """Select execution style from market conditions and urgency."""
+
+    if spread_bps < 0 or volatility < 0 or not 0 <= urgency <= 1:
+        raise ValueError("invalid adaptive execution inputs")
+    if urgency > 0.8 or volatility > 0.05:
+        return "PARTICIPATION"
+    if spread_bps > 25:
+        return "ICEBERG"
+    return "VWAP"
+
+
+class OrderManager:
+    """In-memory order, position, holdings, and reconciliation manager."""
+
+    def __init__(self) -> None:
+        self.orders: dict[str, OrderIntent] = {}
+        self.positions: dict[str, int] = {}
+        self.holdings: dict[str, int] = {}
+
+    def submit(self, intent: OrderIntent, policy: ExecutionPolicy, last_price: float, average_daily_volume: float, kill_switch: KillSwitchState | None = None) -> tuple[str, ...]:
+        """Validate and record an order intent when no policy violations exist."""
+
+        if kill_switch is not None:
+            kill_switch.assert_can_trade()
+        violations = validate_order_intent(intent, policy, last_price, average_daily_volume)
+        if not violations:
+            self.orders[intent.client_order_id] = intent
+        return violations
+
+    def apply_fill(self, client_order_id: str, quantity: int) -> None:
+        """Update positions from a fill quantity."""
+
+        if client_order_id not in self.orders:
+            raise ValueError("unknown order")
+        if quantity <= 0:
+            raise ValueError("fill quantity must be positive")
+        order = self.orders[client_order_id]
+        signed = quantity if order.side == OrderSide.BUY else -quantity
+        key = order.instrument.instrument_id
+        self.positions[key] = self.positions.get(key, 0) + signed
+
+    def reconcile_positions(self, broker_positions: dict[str, int]) -> dict[str, int]:
+        """Return position differences versus broker state."""
+
+        breaks = {}
+        for key in sorted(set(self.positions) | set(broker_positions)):
+            difference = broker_positions.get(key, 0) - self.positions.get(key, 0)
+            if difference:
+                breaks[key] = difference
+        return breaks

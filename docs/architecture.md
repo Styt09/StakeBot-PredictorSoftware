@@ -44,3 +44,21 @@ flowchart TB
 - The final signal engine remains the only component allowed to emit executable BUY/SELL signals.
 - Execution adapters must accept broker-neutral `OrderIntent` objects and enforce `ExecutionPolicy` and `KillSwitchState` before order placement.
 - Operational events should be emitted as `AuditEvent` records and health probes as `HealthCheck` objects.
+
+## Expanded executable tier map
+
+```mermaid
+flowchart TB
+    ResearchOS[research.py\nResearch OS] --> AlphaLab[alpha.py\nAlpha Lab + Science]
+    AlphaLab --> Micro[microstructure.py\nMicrostructure Alpha]
+    AlphaLab --> MLAI[ml_ai.py\nML/AI/LLM + Ensemble]
+    MLAI --> Regime[regime.py\nRegime Intelligence]
+    Regime --> Meta[meta_decision.py\nTier 25 Meta Engine]
+    Deriv[derivatives.py\nDerivatives Lab] --> Meta
+    Risk[risk.py\nDynamic Risk Center] --> Meta
+    Portfolio[portfolio.py\nPortfolio + Capital Allocation] --> Meta
+    Meta --> Signal[signal_engine.py\nFinal Signal Engine]
+    Signal --> Execution[execution.py\nExecution Algorithms + Order Manager]
+    Execution --> TCA[tca_governance.py\nTCA + Governance]
+    TCA --> Observability[observability.py\nAudit + Health]
+```

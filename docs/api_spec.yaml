@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Institutional Trading Platform API
-  version: 0.1.0
-  description: Governance-first API specification for data contracts, signals, risk, execution, and health.
+  version: 0.2.0
+  description: Governance-first API specification for data, research, models, signals, risk, execution, TCA, and health.
 paths:
   /health:
     get:
@@ -28,18 +28,42 @@ paths:
       responses:
         '201':
           description: Feature registered.
+  /research/artifacts:
+    post:
+      summary: Register a governed research notebook, experiment, or backtest artifact.
+      responses:
+        '201':
+          description: Research artifact registered.
+  /models:
+    post:
+      summary: Register a model-risk governed model record.
+      responses:
+        '201':
+          description: Model registered.
   /signals/evaluate:
     post:
       summary: Evaluate normalized model/risk inputs through the final signal engine.
       responses:
         '200':
           description: BUY, SELL, HOLD, or NO TRADE decision.
+  /meta-decision/evaluate:
+    post:
+      summary: Aggregate alpha, ML, RL, LLM, flow, macro, sentiment, options, and risk model signals.
+      responses:
+        '200':
+          description: Final signal output after Tier 25 aggregation and final approval.
   /orders/validate:
     post:
       summary: Validate broker-neutral order intent against execution policy.
       responses:
         '200':
           description: Policy violations, if any.
+  /tca/reports:
+    post:
+      summary: Create a transaction cost analysis report from fills and market benchmarks.
+      responses:
+        '201':
+          description: TCA report created.
   /audit-events:
     post:
       summary: Append an operational audit event.
@@ -57,3 +81,6 @@ components:
     OrderType:
       type: string
       enum: [MARKET, LIMIT]
+    GovernanceDecision:
+      type: string
+      enum: [APPROVE, REJECT, ESCALATE]

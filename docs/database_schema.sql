@@ -91,3 +91,45 @@ CREATE TABLE audit_events (
 
 CREATE INDEX idx_market_bars_ts ON market_bars(ts);
 CREATE INDEX idx_audit_events_type_time ON audit_events(event_type, occurred_at DESC);
+
+CREATE TABLE research_artifacts (
+    artifact_id TEXT PRIMARY KEY,
+    artifact_type TEXT NOT NULL,
+    owner TEXT NOT NULL,
+    manifest_hash TEXT NOT NULL,
+    status TEXT NOT NULL,
+    payload JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE model_registry (
+    model_id TEXT PRIMARY KEY,
+    family TEXT NOT NULL,
+    owner TEXT NOT NULL,
+    version TEXT NOT NULL,
+    feature_names TEXT[] NOT NULL,
+    metrics JSONB NOT NULL,
+    approved BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE regime_states (
+    state_id BIGSERIAL PRIMARY KEY,
+    label TEXT NOT NULL,
+    probability NUMERIC NOT NULL CHECK (probability >= 0 AND probability <= 1),
+    volatility_score NUMERIC NOT NULL,
+    liquidity_score NUMERIC NOT NULL,
+    crisis_score NUMERIC NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE tca_reports (
+    report_id BIGSERIAL PRIMARY KEY,
+    client_order_id TEXT REFERENCES order_intents(client_order_id),
+    average_fill_price NUMERIC NOT NULL,
+    implementation_shortfall_bps NUMERIC NOT NULL,
+    vwap_slippage_bps NUMERIC NOT NULL,
+    twap_slippage_bps NUMERIC NOT NULL,
+    market_impact_bps NUMERIC NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

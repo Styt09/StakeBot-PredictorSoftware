@@ -138,3 +138,90 @@ def _validate_weights(weights: Mapping[str, float]) -> None:
         total += weight
     if abs(total - 1.0) > 1e-6:
         raise ValueError("weights must sum to one")
+
+
+def mean_variance_weights(expected_returns: Mapping[str, float], variances: Mapping[str, float], risk_aversion: float = 1.0) -> dict[str, float]:
+    """Long-only diagonal mean-variance optimizer."""
+
+    if risk_aversion <= 0:
+        raise ValueError("risk_aversion must be positive")
+    raw = {}
+    for asset, expected_return in expected_returns.items():
+        variance = variances.get(asset)
+        if variance is None or variance <= 0:
+            raise ValueError("each asset requires positive variance")
+        raw[asset] = max(0.0, expected_return / (risk_aversion * variance))
+    if sum(raw.values()) == 0:
+        return {asset: 1.0 / len(raw) for asset in raw}
+    total = sum(raw.values())
+    return {asset: value / total for asset, value in raw.items()}
+
+
+def hierarchical_risk_parity_weights(cluster_volatilities: Mapping[str, Mapping[str, float]]) -> dict[str, float]:
+    """Two-level HRP approximation: allocate across clusters then within clusters by inverse volatility."""
+
+    if not cluster_volatilities:
+        raise ValueError("cluster_volatilities cannot be empty")
+    cluster_risk = {cluster: fmean(vols.values()) for cluster, vols in cluster_volatilities.items() if vols}
+    cluster_weights = inverse_volatility_weights(cluster_risk)
+    result = {}
+    for cluster, vols in cluster_volatilities.items():
+        within = inverse_volatility_weights(vols)
+        for asset, weight in within.items():
+            result[asset] = cluster_weights[cluster] * weight
+    return result
+
+
+def black_litterman_weights(market_weights: Mapping[str, float], views: Mapping[str, float], confidence: float = 0.5) -> dict[str, float]:
+    """Blend market equilibrium weights with normalized investor views."""
+
+    _validate_weights(market_weights)
+    if not 0 <= confidence <= 1:
+        raise ValueError("confidence must be in [0,1]")
+    view_assets = {asset: max(0.0, view) for asset, view in views.items() if asset in market_weights}
+    if not view_assets or sum(view_assets.values()) == 0:
+        return dict(market_weights)
+    total_view = sum(view_assets.values())
+    normalized_views = {asset: value / total_view for asset, value in view_assets.items()}
+    blended = {}
+    for asset, market_weight in market_weights.items():
+        blended[asset] = (1 - confidence) * market_weight + confidence * normalized_views.get(asset, 0.0)
+    total = sum(blended.values())
+    return {asset: value / total for asset, value in blended.items()}
+
+
+def cvar_optimization_weights(cvars: Mapping[str, float]) -> dict[str, float]:
+    """Long-only allocation inversely proportional to asset CVaR."""
+
+    return inverse_volatility_weights(cvars)
+
+
+def robust_optimization_weights(candidate_weights: Sequence[Mapping[str, float]]) -> dict[str, float]:
+    """Robust allocation as the average of valid candidate allocations."""
+
+    if not candidate_weights:
+        raise ValueError("candidate_weights cannot be empty")
+    for weights in candidate_weights:
+        _validate_weights(weights)
+    assets = sorted(set().union(*(weights.keys() for weights in candidate_weights)))
+    averaged = {asset: fmean(weights.get(asset, 0.0) for weights in candidate_weights) for asset in assets}
+    total = sum(averaged.values())
+    return {asset: value / total for asset, value in averaged.items()}
+
+
+def capacity_constrained_allocation(target_weights: Mapping[str, float], capacities: Mapping[str, float], portfolio_value: float) -> dict[str, float]:
+    """Scale target weights down when notional capacity constraints bind."""
+
+    _validate_weights(target_weights)
+    if portfolio_value <= 0:
+        raise ValueError("portfolio_value must be positive")
+    adjusted = {}
+    for asset, weight in target_weights.items():
+        capacity = capacities.get(asset, portfolio_value)
+        if capacity < 0:
+            raise ValueError("capacities cannot be negative")
+        adjusted[asset] = min(weight, capacity / portfolio_value)
+    total = sum(adjusted.values())
+    if total == 0:
+        raise ValueError("all capacities are zero")
+    return {asset: value / total for asset, value in adjusted.items()}

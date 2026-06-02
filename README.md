@@ -33,6 +33,11 @@ missing or rejected control returns `NO TRADE` with rejection reasons.
 - **Observability and deployment:** structured audit events, health checks,
   database/API/infrastructure documentation, Docker, CI, and monitoring
   dashboard scaffolding.
+- **Research, alpha, ML/AI, regimes, derivatives, and TCA:** executable
+  registries, alpha/science functions, microstructure analytics, model and
+  ensemble controls, Financial LLM scoring primitives, regime intelligence,
+  derivatives analytics, execution algorithms, transaction cost analysis,
+  governance, drift, retraining, and Tier 25 meta-decision integration.
 - **Automated tests:** coverage for approval gating, missing-score blocking,
   tier catalog readiness, and risk-metric behavior.
 

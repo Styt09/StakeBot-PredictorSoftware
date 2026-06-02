@@ -63,3 +63,19 @@ No existing working functionality was removed. The package exports were expanded
 ## Final readiness assessment
 
 The repository now contains a production-grade foundation for core data contracts, governance, risk-aware sizing, execution validation, observability, documentation, and deployment scaffolding. It is not yet a live trading system because real exchange, broker, database, streaming, surveillance, and regulatory integrations require credentials, vendor contracts, and environment-specific approvals.
+
+## Follow-up implementation — expanded tier coverage
+
+A follow-up audit after the initial foundation found remaining executable gaps for Tiers 3–8, 13–14, 15–25, and advanced portfolio/risk methods. This update adds deterministic, tested primitives for:
+
+- Tier 3 Research OS: notebook registry, experiment tracking, backtest registry, research approvals, audit trail, and reproducibility manifest hashing.
+- Tier 4 Alpha Lab: momentum, mean reversion, trend following, statistical arbitrage, volatility, event-driven, cross-asset, alternative-data, and options alpha functions.
+- Alpha science: IC analysis, IC decay, half-life, diversification, ensemble, walk-forward validation, purged K-fold, and combinatorial purged CV.
+- Tier 4A Microstructure: OFI delegation, VPIN, footprint delta, liquidity sweeps, volume profile, point of control, auction-market bias, and microprice.
+- Tiers 5–6A: model registry, champion/challenger controls, stacking, blending, Bayesian averaging, dynamic ensemble weights, calibration, probabilistic forecast intervals, explainability, causal effect, news/earnings/filing intelligence, research summary scoring, and knowledge graph edges.
+- Tier 7: Bayesian and Markov regime updates, online regime detection, dynamic regime weighting, volatility/liquidity regimes, and crisis detection.
+- Tier 8: Black-Scholes pricing, Greeks, volatility surface lookup/calibration, volatility forecasting, gamma exposure, and variance fair strike.
+- Tiers 10–12: mean-variance, HRP approximation, Black-Litterman blending, CVaR weights, robust allocation, capacity constraints, dynamic VaR/CVaR, stress tests, liquidity/correlation/volatility shocks, and margin forecasting.
+- Tiers 13–14: TWAP, VWAP, iceberg, participation, adaptive execution selection, order manager, reconciliation, and TCA metrics.
+- Tiers 15–24: model-risk score, surveillance score, compliance decisioning, concept drift, automated retraining decisions, reconciliation breaks, and resilience recovery checks.
+- Tier 25: meta decision engine with Bayesian aggregation, dynamic model weighting, conflict resolution, and final signal approval integration.
