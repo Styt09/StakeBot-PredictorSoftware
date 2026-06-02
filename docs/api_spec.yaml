@@ -1,0 +1,59 @@
+openapi: 3.1.0
+info:
+  title: Institutional Trading Platform API
+  version: 0.1.0
+  description: Governance-first API specification for data contracts, signals, risk, execution, and health.
+paths:
+  /health:
+    get:
+      summary: Return aggregate platform health.
+      responses:
+        '200':
+          description: Health status.
+  /contracts:
+    post:
+      summary: Register a data contract.
+      responses:
+        '201':
+          description: Contract registered.
+  /datasets:
+    post:
+      summary: Register a dataset against an existing contract.
+      responses:
+        '201':
+          description: Dataset registered.
+  /features:
+    post:
+      summary: Register a feature and source lineage.
+      responses:
+        '201':
+          description: Feature registered.
+  /signals/evaluate:
+    post:
+      summary: Evaluate normalized model/risk inputs through the final signal engine.
+      responses:
+        '200':
+          description: BUY, SELL, HOLD, or NO TRADE decision.
+  /orders/validate:
+    post:
+      summary: Validate broker-neutral order intent against execution policy.
+      responses:
+        '200':
+          description: Policy violations, if any.
+  /audit-events:
+    post:
+      summary: Append an operational audit event.
+      responses:
+        '201':
+          description: Audit event accepted.
+components:
+  schemas:
+    Decision:
+      type: string
+      enum: [BUY, SELL, HOLD, NO TRADE]
+    OrderSide:
+      type: string
+      enum: [BUY, SELL]
+    OrderType:
+      type: string
+      enum: [MARKET, LIMIT]

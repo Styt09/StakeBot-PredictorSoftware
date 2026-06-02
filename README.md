@@ -1,4 +1,4 @@
-# Ultimate Institutional AI Trading Platform v8.0
+# Ultimate Institutional AI Trading Platform v9.0 Foundation
 
 This repository now contains a governance-first Python foundation for an
 institutional quantitative trading ecosystem focused on alpha generation,
@@ -12,16 +12,27 @@ missing or rejected control returns `NO TRADE` with rejection reasons.
 
 ## Implemented foundation
 
-- **Tier catalog:** a data-driven registry for all 25 v8.0 capability tiers,
+- **Tier catalog:** a data-driven registry for all 25 v9.0 capability tiers,
   including market data, data engineering, alpha research, ML/AI, derivatives,
   portfolio construction, risk, execution, governance, surveillance,
   observability, security, resilience, live trading reliability, and the meta
   decision engine.
-- **Final Signal Engine v8.0:** mandatory gate checking for the platform's
+- **Final Signal Engine v9.0-compatible foundation:** mandatory gate checking for the platform's
   `TRADE ONLY IF` policy, confidence calibration, score validation, and final
   `BUY / SELL / HOLD / NO TRADE` decisions.
 - **Risk utilities:** historical VaR, CVaR, annualized Sharpe, and fractional
   Kelly sizing helpers for risk and capital-allocation workflows.
+- **Domain contracts:** canonical instruments, OHLCV bars, and level-2 order
+  book snapshots with validation and order-flow imbalance metrics.
+- **Data engineering:** data contracts, metadata catalog, dataset and feature
+  registries, lineage checks, quality reports, and population-stability drift
+  monitoring.
+- **Portfolio and execution:** volatility-targeted sizing, inverse-volatility
+  allocation, rebalancing, broker-neutral order intents, execution policy
+  validation, and kill-switch primitives.
+- **Observability and deployment:** structured audit events, health checks,
+  database/API/infrastructure documentation, Docker, CI, and monitoring
+  dashboard scaffolding.
 - **Automated tests:** coverage for approval gating, missing-score blocking,
   tier catalog readiness, and risk-metric behavior.
 
@@ -81,3 +92,22 @@ This is a software foundation and not financial advice. Production deployment
 must include exchange/broker integrations, independent model validation,
 security controls, regulatory review, audited data lineage, and human-approved
 operating procedures.
+
+
+## Production documentation
+
+- Repository audit and implementation roadmap: `docs/repository_audit.md`
+- Architecture diagrams: `docs/architecture.md`
+- Database schema: `docs/database_schema.sql`
+- API specification: `docs/api_spec.yaml`
+- Deployment guide: `docs/deployment_guide.md`
+- Security review: `docs/security_review.md`
+- Performance review: `docs/performance_review.md`
+- Final readiness report: `docs/final_readiness_report.md`
+
+## Deployment assets
+
+- Container image definition: `Dockerfile`
+- Compose test runner: `infrastructure/docker-compose.yml`
+- CI pipeline: `.github/workflows/ci.yml`
+- Monitoring dashboard scaffold: `grafana/dashboards/platform_overview.json`

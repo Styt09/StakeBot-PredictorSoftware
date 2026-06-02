@@ -1,0 +1,11 @@
+{
+  "title": "StakeBot Institutional Platform Overview",
+  "schemaVersion": 39,
+  "panels": [
+    {"type": "stat", "title": "Signal Decisions", "targets": []},
+    {"type": "stat", "title": "Rejected Gates", "targets": []},
+    {"type": "stat", "title": "Data Quality Pass Rate", "targets": []},
+    {"type": "stat", "title": "Execution Policy Violations", "targets": []},
+    {"type": "stat", "title": "Kill Switch State", "targets": []}
+  ]
+}
