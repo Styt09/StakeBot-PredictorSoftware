@@ -1,0 +1,6 @@
+services:
+  platform-tests:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: pytest
