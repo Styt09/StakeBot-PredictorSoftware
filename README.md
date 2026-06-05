@@ -116,3 +116,34 @@ operating procedures.
 - Compose test runner: `infrastructure/docker-compose.yml`
 - CI pipeline: `.github/workflows/ci.yml`
 - Monitoring dashboard scaffold: `grafana/dashboards/platform_overview.json`
+
+## AEGIS Quant Trading Platform web app
+
+Phase 1 (Market Data Spine) remains intact. The AEGIS web layer starts at
+Phase 2 and runs sequentially through Phase 24 with conservative validation
+metadata on every response:
+
+- `data_source`
+- `data_timestamp`
+- `validation_status`
+
+The app refuses to synthesize unavailable trading claims. Missing OI, PCR, IV,
+market depth, order flow, alpha, confidence, expected move, or validation
+evidence is reported as `DATA_UNAVAILABLE`; insufficient evidence routes the
+meta decision to `NO_TRADE`.
+
+Run the dashboard locally with the Python standard library server:
+
+```bash
+python -m institutional_trading_platform.web_app
+```
+
+Then open `http://127.0.0.1:8080/` or query:
+
+```bash
+curl http://127.0.0.1:8080/api/status
+curl http://127.0.0.1:8080/api/demo
+```
+
+The `/api/demo` endpoint uses clearly labelled demo bars for UI inspection only
+and must not be treated as live trading evidence.

@@ -1,0 +1,79 @@
+from datetime import UTC, datetime, timedelta
+
+from institutional_trading_platform import (
+    AegisQuantPlatform,
+    AssetClass,
+    DATA_UNAVAILABLE,
+    Instrument,
+    MarketBar,
+    SignalQualityEngine,
+    TradeDecision,
+    ValidationStatus,
+    Venue,
+)
+from institutional_trading_platform.web_app import HTML
+
+
+def _bars(close_step: float = 1.0) -> dict[str, tuple[MarketBar, ...]]:
+    instrument = Instrument("TEST", Venue.NSE, AssetClass.EQUITY)
+    now = datetime(2026, 1, 1, tzinfo=UTC)
+    data = {}
+    for timeframe in SignalQualityEngine.REQUIRED_TIMEFRAMES:
+        rows = []
+        for index in range(24):
+            close = 100 + index * close_step
+            rows.append(
+                MarketBar(
+                    instrument=instrument,
+                    timestamp=now + timedelta(minutes=index),
+                    open=close - 0.2,
+                    high=close + 0.5,
+                    low=close - 0.5,
+                    close=close,
+                    volume=10_000 + index * 200,
+                    source="unit_test_feed",
+                    received_at=now + timedelta(minutes=index, seconds=1),
+                )
+            )
+        data[timeframe] = tuple(rows)
+    return data
+
+
+def test_signal_quality_blocks_when_timeframes_missing() -> None:
+    output = SignalQualityEngine().evaluate({})
+
+    assert output.decision == TradeDecision.NO_TRADE
+    assert output.entry == DATA_UNAVAILABLE
+    assert output.provenance.validation_status == ValidationStatus.DATA_UNAVAILABLE
+    assert "data_source" in output.provenance.as_dict()
+    assert "data_timestamp" in output.provenance.as_dict()
+    assert "validation_status" in output.provenance.as_dict()
+
+
+def test_signal_quality_emits_validated_buy_from_complete_real_bars() -> None:
+    output = SignalQualityEngine().evaluate(_bars())
+
+    assert output.decision == TradeDecision.BUY
+    assert output.provenance.data_source == "unit_test_feed"
+    assert output.provenance.validation_status == ValidationStatus.VALIDATED
+    assert output.risk_reward != DATA_UNAVAILABLE
+    assert output.confidence != DATA_UNAVAILABLE
+
+
+def test_aegis_platform_runs_phases_2_through_24_sequentially() -> None:
+    phases = AegisQuantPlatform().run(_bars())
+
+    assert [phase.phase for phase in phases] == list(range(2, 25))
+    assert phases[0].name == "Signal Quality Engine"
+    assert phases[-1].outputs["decision"] == "NO_TRADE"
+    for phase in phases:
+        payload = phase.as_dict()
+        assert payload["provenance"]["data_source"]
+        assert payload["provenance"]["data_timestamp"]
+        assert payload["provenance"]["validation_status"]
+
+
+def test_web_app_html_contains_aegis_dashboard_contract() -> None:
+    assert "AEGIS QUANT TRADING PLATFORM" in HTML
+    assert "DATA_UNAVAILABLE" in HTML
+    assert "/api/demo" in HTML

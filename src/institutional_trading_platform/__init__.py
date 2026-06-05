@@ -1,5 +1,23 @@
 """Governance-first institutional quantitative trading platform primitives."""
 
+
+from .aegis_platform import (
+    AegisQuantPlatform,
+    DATA_UNAVAILABLE,
+    NO_TRADE,
+    ForecastEngine,
+    OptionIntelligenceInput,
+    OptionsIntelligenceEngine,
+    PhaseResult,
+    Provenance,
+    Regime,
+    RiskEngine,
+    SignalQualityEngine,
+    SignalQualityOutput,
+    TradeDecision,
+    ValidationFramework,
+    ValidationStatus,
+)
 from .alpha import (
     AlphaSignal,
     alpha_diversification,
@@ -172,6 +190,21 @@ from .tca_governance import (
 from .tiers import PlatformTier, TierCatalog, build_v8_tier_catalog
 
 __all__ = [
+    "AegisQuantPlatform",
+    "DATA_UNAVAILABLE",
+    "NO_TRADE",
+    "ForecastEngine",
+    "OptionIntelligenceInput",
+    "OptionsIntelligenceEngine",
+    "PhaseResult",
+    "Provenance",
+    "Regime",
+    "RiskEngine",
+    "SignalQualityEngine",
+    "SignalQualityOutput",
+    "TradeDecision",
+    "ValidationFramework",
+    "ValidationStatus",
     "ApprovalGate",
     "AssetClass",
     "AuditEvent",
