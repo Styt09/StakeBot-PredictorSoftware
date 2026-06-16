@@ -73,7 +73,27 @@ def test_aegis_platform_runs_phases_2_through_24_sequentially() -> None:
         assert payload["provenance"]["validation_status"]
 
 
-def test_web_app_html_contains_aegis_dashboard_contract() -> None:
-    assert "AEGIS QUANT TRADING PLATFORM" in HTML
+def test_web_app_html_contains_alpha_gate_shadow_dashboard_contract() -> None:
+    assert "ALPHA-GATE X SHADOW TRADING PLATFORM" in HTML
+    assert "Paper Trading → Shadow Trading → Manual Review" in HTML
+    assert "Real Shadow Runtime Status" in HTML
     assert "DATA_UNAVAILABLE" in HTML
     assert "/api/demo" in HTML
+    assert "/api/shadow/status" in HTML
+
+
+def test_shadow_status_fails_closed_without_broker_inputs(monkeypatch) -> None:
+    from institutional_trading_platform.web_app import _shadow_status
+
+    for key in ("ZERODHA_API_KEY", "ZERODHA_ACCESS_TOKEN", "ENABLE_ZERODHA_WEBSOCKET"):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("ZERODHA_INSTRUMENT_DUMP_PATH", "data/instruments.csv")
+
+    status = _shadow_status()
+
+    assert status["mode"] == "PAPER_TRADING"
+    assert status["go_live_allowed"] is False
+    assert status["zerodha_status"] == "ZERODHA_UNAVAILABLE"
+    assert status["total_ticks_processed"] == 0
+    assert status["shadow_recommendation"] == "CONTINUE_PAPER"
+    assert any("missing Zerodha credentials" in reason for reason in status["failure_reasons"])

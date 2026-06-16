@@ -1,0 +1,17 @@
+services:
+  alpha-gate-x-local:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env.example
+    environment:
+      ALPHA_GATE_PROFILE: LOCAL
+      AUDIT_DB_PATH: /data/alpha_gate_x_audit.db
+      TRADING_MODE: PAPER_TRADING
+      LIVE_TRADING: "false"
+    volumes:
+      - alpha_gate_x_data:/data
+    command: python -m pytest -q
+volumes:
+  alpha_gate_x_data:

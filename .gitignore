@@ -1,0 +1,14 @@
+# Python/cache artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Runtime-local secrets and audit/data artifacts
+.env
+.env.local
+alpha_gate_x_audit.db
+*.sqlite
+*.sqlite3
+
+# Downloaded broker data; regenerate locally from the broker endpoint.
+data/instruments.csv

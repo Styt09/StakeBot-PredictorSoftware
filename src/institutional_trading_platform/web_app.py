@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
 from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Mapping
@@ -10,13 +12,15 @@ from urllib.parse import urlparse
 
 from .aegis_platform import AegisQuantPlatform
 from .domain import AssetClass, Instrument, MarketBar, Venue
+from .broker import ReadOnlyKiteTickerWrapper
+from .runtime import InMemoryAuditStore, LivePaperTradingEngine, RuntimeConfig, ShadowRunValidator
 
 HTML = """<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AEGIS Quant Trading Platform</title>
+  <title>ALPHA-GATE X Shadow Trading Platform</title>
   <style>
     :root { color-scheme: dark; --bg:#07111f; --panel:#0f1f35; --line:#24415f; --text:#e8f2ff; --muted:#9eb5d1; --accent:#6ee7b7; --warn:#fbbf24; }
     body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; background: radial-gradient(circle at top, #12345a, var(--bg)); color:var(--text); }
@@ -29,14 +33,17 @@ HTML = """<!doctype html>
     .phase { display:flex; flex-direction:column; gap:10px; }
     .status { display:inline-flex; width:max-content; border-radius:999px; padding:5px 10px; background:#132b45; color:var(--accent); font-size:.76rem; font-weight:800; letter-spacing:.08em; }
     .blocked { color:var(--warn); }
+    .shadow { margin-top:24px; }
+    .kv { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
+    .kv div { background:#09192b; border:1px solid var(--line); border-radius:12px; padding:10px; }
     pre { white-space:pre-wrap; overflow:auto; color:#d7e9ff; background:#071523; padding:12px; border-radius:12px; }
     a { color:var(--accent); }
   </style>
 </head>
 <body>
   <header>
-    <h1>AEGIS QUANT TRADING PLATFORM</h1>
-    <h2>Master Implementation Program · Phase 2 → Phase 24</h2>
+    <h1>ALPHA-GATE X SHADOW TRADING PLATFORM</h1>
+    <h2>Paper Trading → Shadow Trading → Manual Review</h2>
     <p>No fabricated accuracy, confidence, profitability, expected move, OI, PCR, IV, depth, flow, or alpha. Missing evidence returns <strong>DATA_UNAVAILABLE</strong>; insufficient evidence returns <strong>NO_TRADE</strong>.</p>
   </header>
   <main>
@@ -47,6 +54,13 @@ HTML = """<!doctype html>
     </section>
     <h2>Sequential Phase Console</h2>
     <div id="phases" class="grid"></div>
+    <section class="card shadow">
+      <span class="status blocked">READ-ONLY · GO-LIVE DISABLED</span>
+      <h2>Real Shadow Runtime Status</h2>
+      <p>Live broker mutations remain disabled. Missing credentials, instruments, or WebSocket readiness are reported as unavailable instead of using fake data.</p>
+      <div id="shadow-status" class="kv"></div>
+      <pre id="shadow-raw">Loading shadow runtime status...</pre>
+    </section>
   </main>
   <script>
     fetch('/api/demo').then(r => r.json()).then(data => {
@@ -57,6 +71,13 @@ HTML = """<!doctype html>
           <p><strong>Source:</strong> ${phase.provenance.data_source}<br><strong>Timestamp:</strong> ${phase.provenance.data_timestamp}<br><strong>Validation:</strong> ${phase.provenance.validation_status}</p>
           <pre>${JSON.stringify(phase.outputs, null, 2)}</pre>
         </article>`).join('')
+    })
+    fetch('/api/shadow/status').then(r => r.json()).then(status => {
+      const keys = ['mode', 'zerodha_status', 'data_source', 'total_ticks_processed', 'candles_finalized', 'signals_generated', 'paper_orders', 'fills', 'open_positions', 'closed_positions', 'realized_pnl', 'unrealized_pnl', 'total_equity', 'shadow_days_completed', 'shadow_recommendation', 'go_live_allowed'];
+      document.getElementById('shadow-status').innerHTML = keys.map(key => `<div><strong>${key}</strong><br>${status[key]}</div>`).join('');
+      document.getElementById('shadow-raw').textContent = JSON.stringify(status, null, 2);
+    }).catch(error => {
+      document.getElementById('shadow-raw').textContent = `Shadow status unavailable: ${error}`;
     })
   </script>
 </body>
@@ -82,6 +103,8 @@ class AegisRequestHandler(BaseHTTPRequestHandler):
         elif path == "/api/demo":
             phases = [phase.as_dict() for phase in AegisQuantPlatform().run(_demo_bars())]
             self._send_json(200, {"phases": phases})
+        elif path == "/api/shadow/status":
+            self._send_json(200, _shadow_status())
         else:
             self._send_json(404, {"error": "not_found"})
 
@@ -104,6 +127,65 @@ def run(host: str = "127.0.0.1", port: int = 8080) -> None:
     """Run the AEGIS web app with Python's stdlib HTTP server."""
 
     ThreadingHTTPServer((host, port), AegisRequestHandler).serve_forever()
+
+
+def _shadow_status() -> dict[str, Any]:
+    """Return read-only paper/shadow runtime status without starting broker feeds."""
+
+    failure_reasons: list[str] = []
+    env = os.environ
+    required_env = ("ZERODHA_API_KEY", "ZERODHA_ACCESS_TOKEN")
+    missing_auth = tuple(key for key in required_env if not env.get(key, "").strip())
+    instrument_path = env.get("ZERODHA_INSTRUMENT_DUMP_PATH", "data/instruments.csv").strip() or "data/instruments.csv"
+    instruments_available = Path(instrument_path).exists() and Path(instrument_path).stat().st_size > 0
+    websocket_enabled = env.get("ENABLE_ZERODHA_WEBSOCKET", "false").strip().lower() in {"1", "true", "yes", "on"}
+
+    if missing_auth:
+        failure_reasons.append(f"missing Zerodha credentials: {', '.join(missing_auth)}")
+    if not instruments_available:
+        failure_reasons.append(f"instrument dump unavailable: {instrument_path}")
+    if not websocket_enabled:
+        failure_reasons.append("read-only Zerodha WebSocket disabled")
+
+    if missing_auth:
+        zerodha_status = "ZERODHA_UNAVAILABLE"
+    elif not instruments_available or not websocket_enabled:
+        zerodha_status = "DATA_UNAVAILABLE"
+    else:
+        zerodha_status = "READ_ONLY_READY_NOT_STARTED"
+
+    # Instantiate the read-only wrapper class symbol to prove the runtime can import it,
+    # but do not create a Kite connection, subscribe, or request live data here.
+    ticker_wrapper_available = ReadOnlyKiteTickerWrapper is not None
+    audit_store = InMemoryAuditStore()
+    engine = LivePaperTradingEngine(config=RuntimeConfig(), audit_store=audit_store)
+    report = engine.build_report()
+    shadow = ShadowRunValidator(audit_store).status()
+
+    return {
+        "mode": engine.config.trading_mode.value,
+        "go_live_allowed": False,
+        "zerodha_status": zerodha_status,
+        "data_source": "RUNTIME_AUDIT_STORE" if not failure_reasons else "DATA_UNAVAILABLE",
+        "total_ticks_processed": report.total_ticks_processed,
+        "candles_finalized": report.candles_finalized,
+        "signals_generated": report.signals_generated,
+        "paper_orders": report.paper_orders,
+        "fills": report.fills,
+        "open_positions": report.open_positions,
+        "closed_positions": report.closed_positions,
+        "realized_pnl": report.realized_pnl,
+        "unrealized_pnl": report.unrealized_pnl,
+        "total_equity": report.total_equity,
+        "max_drawdown": report.max_drawdown,
+        "risk_blocks": report.risk_blocks,
+        "data_quality_blocks": report.data_quality_blocks,
+        "runtime_errors": report.runtime_errors,
+        "shadow_days_completed": shadow.trading_days_completed,
+        "shadow_recommendation": shadow.recommendation.value,
+        "failure_reasons": tuple(failure_reasons + list(shadow.failure_reasons)),
+        "ticker_wrapper_available": ticker_wrapper_available,
+    }
 
 
 def _demo_bars() -> dict[str, tuple[MarketBar, ...]]:
