@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Mapping
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
 
 from .aegis_platform import AegisQuantPlatform
@@ -24,47 +24,126 @@ HTML = """<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ALPHA-GATE X Shadow Trading Platform</title>
   <style>
-    :root { color-scheme: dark; --bg:#07111f; --panel:#0f1f35; --line:#24415f; --text:#e8f2ff; --muted:#9eb5d1; --accent:#6ee7b7; --warn:#fbbf24; --danger:#fb7185; }
-    body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; background: radial-gradient(circle at top, #12345a, var(--bg)); color:var(--text); }
-    header { padding:42px min(6vw,72px) 24px; border-bottom:1px solid var(--line); }
-    h1 { margin:0; font-size:clamp(2rem, 5vw, 4.5rem); letter-spacing:.06em; }
-    h2 { margin:.2rem 0 0; color:var(--accent); font-weight:700; }
-    main { padding:28px min(6vw,72px) 56px; }
-    .principles, .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }
-    .card { background:rgba(15,31,53,.88); border:1px solid var(--line); border-radius:18px; padding:18px; box-shadow:0 16px 42px rgba(0,0,0,.25); }
+    :root {
+      color-scheme: dark;
+      --bg:#050a14;
+      --panel:rgba(12,25,44,.82);
+      --panel-strong:rgba(17,34,59,.94);
+      --line:rgba(148,163,184,.22);
+      --text:#edf7ff;
+      --muted:#9eb5d1;
+      --accent:#67e8f9;
+      --accent2:#6ee7b7;
+      --warn:#fbbf24;
+      --danger:#fb7185;
+      --shadow:0 22px 70px rgba(0,0,0,.38);
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(103,232,249,.20), transparent 34%),
+        radial-gradient(circle at 85% 8%, rgba(110,231,183,.16), transparent 30%),
+        linear-gradient(135deg, #06101f 0%, #09162b 48%, #07111f 100%);
+      color:var(--text);
+      min-height:100vh;
+    }
+    header { padding:38px min(5vw,70px) 22px; border-bottom:1px solid var(--line); position:relative; overflow:hidden; }
+    header::after { content:""; position:absolute; inset:auto -12% -42px 38%; height:145px; background:linear-gradient(90deg, transparent, rgba(103,232,249,.16), transparent); transform:rotate(-6deg); }
+    h1 { margin:0; font-size:clamp(2rem, 5vw, 4.8rem); letter-spacing:.07em; line-height:1.02; }
+    h2 { margin:.25rem 0 0; color:var(--accent2); font-weight:800; }
+    h3 { margin:.25rem 0; }
+    p { color:#d8e7f7; }
+    main { padding:24px min(5vw,70px) 56px; }
+    .topbar { position:sticky; top:0; z-index:5; display:flex; gap:10px; align-items:center; justify-content:space-between; margin:-24px min(-5vw,-70px) 22px; padding:10px min(5vw,70px); background:rgba(5,10,20,.74); backdrop-filter: blur(14px); border-bottom:1px solid var(--line); }
+    .badge { display:inline-flex; width:max-content; align-items:center; gap:6px; border-radius:999px; padding:6px 11px; background:#0e243f; color:var(--accent2); font-size:.73rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+    .badge.warn { color:var(--warn); background:rgba(251,191,36,.12); }
+    .badge.danger { color:var(--danger); background:rgba(251,113,133,.13); }
+    .badge.info { color:var(--accent); background:rgba(103,232,249,.11); }
+    .principles, .grid, .market-grid, .watchlist { display:grid; grid-template-columns:repeat(auto-fit,minmax(245px,1fr)); gap:16px; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:22px; padding:18px; box-shadow:var(--shadow); backdrop-filter:blur(16px); }
+    .card.strong { background:var(--panel-strong); }
     .phase { display:flex; flex-direction:column; gap:10px; }
-    .status { display:inline-flex; width:max-content; border-radius:999px; padding:5px 10px; background:#132b45; color:var(--accent); font-size:.76rem; font-weight:800; letter-spacing:.08em; }
     .blocked { color:var(--warn); }
     .danger { color:var(--danger); }
     .shadow { margin-top:24px; }
-    .kv { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
-    .kv div { background:#09192b; border:1px solid var(--line); border-radius:12px; padding:10px; }
-    .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin:12px 0; }
-    button, input, select { border-radius:10px; border:1px solid var(--line); padding:10px; background:#09192b; color:var(--text); }
-    button { cursor:pointer; font-weight:800; }
+    .kv { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; }
+    .kv div { background:rgba(5,17,31,.72); border:1px solid var(--line); border-radius:14px; padding:11px; min-height:58px; }
+    .kv strong { color:#dbeafe; display:block; font-size:.78rem; opacity:.9; }
+    .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; margin:12px 0; }
+    button, input, select { border-radius:13px; border:1px solid var(--line); padding:11px 12px; background:rgba(5,17,31,.82); color:var(--text); min-height:42px; }
+    button { cursor:pointer; font-weight:900; }
+    button:hover { border-color:rgba(103,232,249,.55); }
     button[disabled] { cursor:not-allowed; opacity:.45; }
     button.danger { background:#3a1320; color:#fecdd3; border-color:#7f1d1d; }
-    .action-result { margin:12px 0; background:#09192b; border:1px solid var(--line); border-radius:12px; padding:12px; }
-    .action-result strong { color:var(--accent); }
-    pre { white-space:pre-wrap; overflow:auto; color:#d7e9ff; background:#071523; padding:12px; border-radius:12px; }
+    .action-result { margin:12px 0; background:rgba(5,17,31,.72); border:1px solid var(--line); border-radius:14px; padding:13px; }
+    .action-result strong { color:var(--accent2); }
+    .market-hero { display:grid; grid-template-columns: minmax(0, 1fr); gap:16px; }
+    .quote-tile { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .quote-value { font-size:clamp(1.8rem,7vw,4rem); font-weight:950; line-height:1; }
+    .chart-wrap { min-height:330px; display:flex; flex-direction:column; gap:10px; }
+    canvas { width:100%; height:280px; background:linear-gradient(180deg, rgba(6,24,44,.92), rgba(3,10,20,.92)); border:1px solid var(--line); border-radius:18px; }
+    .watch-card { cursor:pointer; transition:transform .15s ease, border-color .15s ease; }
+    .watch-card:hover { transform:translateY(-2px); border-color:rgba(103,232,249,.45); }
+    .muted { color:var(--muted); }
+    pre { white-space:pre-wrap; overflow:auto; color:#d7e9ff; background:rgba(3,10,20,.86); padding:12px; border-radius:14px; max-height:360px; }
     a { color:var(--accent); }
+    @media (min-width:900px) { .market-hero { grid-template-columns: .78fr 1.22fr; } }
   </style>
 </head>
 <body>
   <header>
+    <span class="badge info">READ-ONLY MARKET DATA · LIVE TRADING FAIL-CLOSED</span>
     <h1>ALPHA-GATE X SHADOW TRADING PLATFORM</h1>
     <h2>Paper Trading → Shadow Trading → Manual Review</h2>
     <p>No fabricated accuracy, confidence, profitability, expected move, OI, PCR, IV, depth, flow, or alpha. Missing evidence returns <strong>DATA_UNAVAILABLE</strong>; insufficient evidence returns <strong>NO_TRADE</strong>. Live trading remains <strong>NO-GO</strong> unless strict manual gates pass.</p>
   </header>
   <main>
+    <section class="topbar">
+      <span class="badge info" id="connection-badge">CONNECTION · CHECKING</span>
+      <span class="badge danger">AUTO LIVE TRADING DISABLED</span>
+    </section>
+
     <section class="principles">
       <div class="card"><strong>Runtime Mode</strong><p>Paper/shadow validation first. Live auto trading is disabled.</p></div>
       <div class="card"><strong>Data Source</strong><p>Every API payload includes data_source and timestamp.</p></div>
       <div class="card"><strong>Validation Status</strong><p>Every phase reports validation_status before outputs are considered.</p></div>
     </section>
 
+    <section class="card strong shadow">
+      <span class="badge info">READ-ONLY</span>
+      <h2>Live Market Dashboard</h2>
+      <p class="muted">Quotes and chart data are read-only. If Zerodha live data is not connected, this dashboard shows DATA_UNAVAILABLE instead of fake prices.</p>
+      <div class="controls">
+        <select id="market-symbol"><option>RELIANCE</option><option>INFY</option><option>TCS</option><option>NIFTY</option><option>BANKNIFTY</option></select>
+        <button onclick="refreshMarketData()">Refresh Market Data</button>
+        <button onclick="loadChart()">Load Chart</button>
+      </div>
+      <div class="market-hero">
+        <div class="card">
+          <span id="quote-status" class="badge warn">DATA_UNAVAILABLE</span>
+          <h3 id="quote-symbol">RELIANCE</h3>
+          <div id="quote-ltp" class="quote-value">--</div>
+          <div id="quote-change" class="muted">Change unavailable</div>
+          <div id="quote-kv" class="kv" style="margin-top:12px"></div>
+        </div>
+        <div class="card chart-wrap">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+            <h3>Price Chart</h3>
+            <span id="chart-status" class="badge warn">Live data unavailable</span>
+          </div>
+          <canvas id="market-chart" width="900" height="320"></canvas>
+          <div id="chart-message" class="muted">Load chart to check read-only history availability.</div>
+        </div>
+      </div>
+      <h3>Watchlist</h3>
+      <div id="watchlist" class="watchlist"></div>
+      <pre id="market-raw">Market payload will appear here.</pre>
+    </section>
+
     <section class="card shadow">
-      <span class="status danger">LIVE MONEY RISK · MANUAL APPROVAL ONLY</span>
+      <span class="badge danger">LIVE MONEY RISK · MANUAL APPROVAL ONLY</span>
       <h2>Real Live Trading Control Panel</h2>
       <p>Automatic live trading is disabled. Live order submit remains blocked unless credentials, instruments, env gates, approval, idempotency, and risk checks pass.</p>
       <div class="controls">
@@ -91,7 +170,7 @@ HTML = """<!doctype html>
     <h2>Shadow Trading Preview Console</h2>
     <div id="phases" class="grid"></div>
     <section class="card shadow">
-      <span class="status blocked">READ-ONLY · GO-LIVE DISABLED</span>
+      <span class="badge warn">READ-ONLY · GO-LIVE DISABLED</span>
       <h2>Real Shadow Runtime Status</h2>
       <p>Live broker mutations remain disabled. Missing credentials, instruments, or WebSocket readiness are reported as unavailable instead of using fake data.</p>
       <div id="shadow-status" class="kv"></div>
@@ -100,8 +179,9 @@ HTML = """<!doctype html>
   </main>
   <script>
     let latestPreviewId = null;
+    const marketSymbols = ['RELIANCE', 'INFY', 'TCS', 'NIFTY', 'BANKNIFTY'];
     const renderKv = (target, status, keys) => {
-      document.getElementById(target).innerHTML = keys.map(key => `<div><strong>${key}</strong><br>${status[key]}</div>`).join('');
+      document.getElementById(target).innerHTML = keys.map(key => `<div><strong>${key}</strong>${status[key] ?? 'DATA_UNAVAILABLE'}</div>`).join('');
     };
     const setActionResult = (label, payload) => {
       const stamp = new Date().toLocaleTimeString();
@@ -111,10 +191,11 @@ HTML = """<!doctype html>
     const setSubmitEnabled = (enabled) => {
       document.getElementById('submit-live-order').disabled = !enabled;
     };
+    const setMarketRaw = (payload) => { document.getElementById('market-raw').textContent = JSON.stringify(payload, null, 2); };
     fetch('/api/demo').then(r => r.json()).then(data => {
       document.getElementById('phases').innerHTML = data.phases.map(phase => `
         <article class="card phase">
-          <span class="status ${phase.status === 'BLOCKED' ? 'blocked' : ''}">PHASE ${phase.phase} · ${phase.status}</span>
+          <span class="badge ${phase.status === 'BLOCKED' ? 'warn' : 'info'}">PHASE ${phase.phase} · ${phase.status}</span>
           <h3>${phase.name}</h3>
           <p><strong>Source:</strong> ${phase.provenance.data_source}<br><strong>Timestamp:</strong> ${phase.provenance.data_timestamp}<br><strong>Validation:</strong> ${phase.provenance.validation_status}</p>
           <pre>${JSON.stringify(phase.outputs, null, 2)}</pre>
@@ -134,6 +215,7 @@ HTML = """<!doctype html>
       fetch('/api/live/readiness').then(r => r.json()).then(status => {
         const keys = ['mode', 'zerodha_credentials_visible', 'access_token_visible', 'expected_user_id_match', 'instruments_csv_exists', 'live_trading_env_enabled', 'manual_approval_required', 'kill_switch_status', 'go_live_allowed'];
         renderKv('live-readiness', status, keys);
+        document.getElementById('connection-badge').textContent = status.block_reasons && status.block_reasons.length ? 'CONNECTION · BLOCKED' : 'CONNECTION · READY';
         setSubmitEnabled(false);
         setActionResult(status.block_reasons && status.block_reasons.length ? 'Readiness BLOCKED' : 'Readiness checked', status);
       }).catch(error => setActionResult('Readiness ERROR', {error: String(error)}))
@@ -180,6 +262,65 @@ HTML = """<!doctype html>
         loadLiveReadiness();
       }).catch(error => setActionResult('Kill switch reset ERROR', {error: String(error)}));
     }
+    function renderWatchlist(payload) {
+      const rows = payload.symbols || marketSymbols;
+      document.getElementById('watchlist').innerHTML = rows.map(symbol => `<div class="card watch-card" onclick="selectMarketSymbol('${symbol}')"><span class="badge warn">DATA_UNAVAILABLE</span><h3>${symbol}</h3><p class="muted">Tap to load read-only quote.</p></div>`).join('');
+    }
+    function selectMarketSymbol(symbol) {
+      document.getElementById('market-symbol').value = symbol;
+      refreshMarketData();
+      loadChart();
+    }
+    function refreshMarketData() {
+      const symbol = document.getElementById('market-symbol').value;
+      fetch(`/api/market/quote?symbol=${encodeURIComponent(symbol)}`).then(r => r.json()).then(payload => {
+        document.getElementById('quote-symbol').textContent = payload.symbol || symbol;
+        document.getElementById('quote-ltp').textContent = payload.ltp ?? '--';
+        document.getElementById('quote-change').textContent = payload.change_percent === 'DATA_UNAVAILABLE' ? 'Change unavailable' : `${payload.change_percent}%`;
+        document.getElementById('quote-status').textContent = payload.validation_status || 'DATA_UNAVAILABLE';
+        renderKv('quote-kv', payload, ['open', 'high', 'low', 'close', 'volume', 'last_update', 'data_source', 'connection_status']);
+        setMarketRaw(payload);
+      }).catch(error => setMarketRaw({status:'ERROR', error:String(error)}));
+    }
+    function loadChart() {
+      const symbol = document.getElementById('market-symbol').value;
+      fetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}`).then(r => r.json()).then(payload => {
+        drawChart(payload.candles || []);
+        document.getElementById('chart-status').textContent = payload.validation_status === 'VALIDATED' ? 'CHART READY' : 'Live data unavailable';
+        document.getElementById('chart-message').textContent = payload.validation_status === 'VALIDATED' ? `Showing read-only history for ${symbol}` : 'Live data unavailable. No fabricated chart data is rendered.';
+        setMarketRaw(payload);
+      }).catch(error => setMarketRaw({status:'ERROR', error:String(error)}));
+    }
+    function drawChart(candles) {
+      const canvas = document.getElementById('market-chart');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#071523';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(148,163,184,.22)';
+      for (let i=0;i<6;i++) { const y = 30 + i*48; ctx.beginPath(); ctx.moveTo(28,y); ctx.lineTo(canvas.width-28,y); ctx.stroke(); }
+      if (!candles.length) {
+        ctx.fillStyle = '#9eb5d1';
+        ctx.font = '26px system-ui';
+        ctx.fillText('Live data unavailable', 46, 148);
+        ctx.font = '16px system-ui';
+        ctx.fillText('No fabricated chart data is rendered.', 46, 178);
+        return;
+      }
+      const closes = candles.map(c => Number(c.close)).filter(Number.isFinite);
+      const min = Math.min(...closes), max = Math.max(...closes);
+      const range = Math.max(max-min, 1);
+      ctx.strokeStyle = '#67e8f9'; ctx.lineWidth = 3; ctx.beginPath();
+      closes.forEach((close, index) => {
+        const x = 30 + index * ((canvas.width-60) / Math.max(closes.length-1, 1));
+        const y = canvas.height - 35 - ((close-min)/range) * (canvas.height-70);
+        if (index === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+    }
+    fetch('/api/market/watchlist').then(r => r.json()).then(renderWatchlist).catch(() => renderWatchlist({symbols: marketSymbols}));
+    refreshMarketData();
+    loadChart();
     loadShadowStatus();
     loadLiveReadiness();
   </script>
@@ -216,9 +357,11 @@ class AlphaGateXRequestHandler(BaseHTTPRequestHandler):
     server_version = "AlphaGateXShadowWeb/1.0"
 
     def do_GET(self) -> None:  # noqa: N802 - stdlib handler API
-        """Route dashboard, health, status, demo, shadow status, and live readiness requests."""
+        """Route dashboard, health, status, demo, shadow, live, and market requests."""
 
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
+        query = parse_qs(parsed.query)
         if path == "/":
             self._send(200, HTML, "text/html; charset=utf-8")
         elif path == "/health":
@@ -236,6 +379,12 @@ class AlphaGateXRequestHandler(BaseHTTPRequestHandler):
             self._send_json(200, _live_orders())
         elif path == "/api/safety/gates":
             self._send_json(200, _safety_gates())
+        elif path == "/api/market/watchlist":
+            self._send_json(200, _market_watchlist())
+        elif path == "/api/market/quote":
+            self._send_json(200, _market_quote(_query_symbol(query)))
+        elif path == "/api/market/history":
+            self._send_json(200, _market_history(_query_symbol(query)))
         else:
             self._send_json(404, {"error": "not_found"})
 
@@ -315,8 +464,6 @@ def _shadow_status() -> dict[str, Any]:
     else:
         zerodha_status = "READ_ONLY_READY_NOT_STARTED"
 
-    # Instantiate the read-only wrapper class symbol to prove the runtime can import it,
-    # but do not create a Kite connection, subscribe, or request live data here.
     ticker_wrapper_available = ReadOnlyKiteTickerWrapper is not None
     audit_store = InMemoryAuditStore()
     engine = LivePaperTradingEngine(config=RuntimeConfig(), audit_store=audit_store)
@@ -445,8 +592,6 @@ def _live_order_submit(payload: Mapping[str, Any]) -> dict[str, Any]:
             "block_reasons": tuple(dict.fromkeys(reasons)),
         }
 
-    # No broker placement is performed by this stdlib dashboard. A separate
-    # audited broker adapter must be injected only after manual certification.
     return {
         "status": "BLOCKED",
         "broker_order_id": None,
@@ -477,6 +622,50 @@ def _safety_gates() -> dict[str, Any]:
     }
 
 
+def _market_watchlist() -> dict[str, Any]:
+    symbols = tuple(symbol for symbol in ("RELIANCE", "INFY", "TCS", "NIFTY", "BANKNIFTY") if symbol in _symbol_whitelist() or symbol in {"NIFTY", "BANKNIFTY"})
+    return {
+        "symbols": symbols or ("RELIANCE", "INFY", "TCS", "NIFTY", "BANKNIFTY"),
+        "data_source": "DATA_UNAVAILABLE",
+        "validation_status": "DATA_UNAVAILABLE",
+        "connection_status": "READ_ONLY_MARKET_DATA_NOT_CONNECTED",
+        "go_live_allowed": False,
+    }
+
+
+def _market_quote(symbol: str) -> dict[str, Any]:
+    normalized = symbol.strip().upper() or "RELIANCE"
+    return {
+        "symbol": normalized,
+        "ltp": "DATA_UNAVAILABLE",
+        "open": "DATA_UNAVAILABLE",
+        "high": "DATA_UNAVAILABLE",
+        "low": "DATA_UNAVAILABLE",
+        "close": "DATA_UNAVAILABLE",
+        "change_percent": "DATA_UNAVAILABLE",
+        "volume": "DATA_UNAVAILABLE",
+        "last_update": "DATA_UNAVAILABLE",
+        "data_source": "DATA_UNAVAILABLE",
+        "validation_status": "DATA_UNAVAILABLE",
+        "connection_status": "ZERODHA_READ_ONLY_QUOTE_NOT_CONNECTED",
+        "go_live_allowed": False,
+        "message": "Live quote unavailable; no fabricated market price returned.",
+    }
+
+
+def _market_history(symbol: str) -> dict[str, Any]:
+    normalized = symbol.strip().upper() or "RELIANCE"
+    return {
+        "symbol": normalized,
+        "candles": (),
+        "data_source": "DATA_UNAVAILABLE",
+        "validation_status": "DATA_UNAVAILABLE",
+        "connection_status": "ZERODHA_READ_ONLY_HISTORY_NOT_CONNECTED",
+        "go_live_allowed": False,
+        "message": "Live history unavailable; chart must render empty state, not fabricated data.",
+    }
+
+
 def _set_kill_switch(enabled: bool) -> dict[str, Any]:
     global _KILL_SWITCH_ENABLED
     _KILL_SWITCH_ENABLED = enabled
@@ -500,6 +689,11 @@ def _live_block_reasons(readiness: Mapping[str, Any]) -> list[str]:
     if readiness["kill_switch_status"] == "ENABLED":
         reasons.append("kill switch enabled")
     return reasons
+
+
+def _query_symbol(query: Mapping[str, list[str]]) -> str:
+    values = query.get("symbol") or ["RELIANCE"]
+    return values[0].strip().upper() if values else "RELIANCE"
 
 
 def _kill_switch_active() -> bool:
@@ -558,7 +752,6 @@ def _demo_bars() -> dict[str, tuple[MarketBar, ...]]:
     return result
 
 
-# Backward-compatible alias for older tests/imports.
 AegisRequestHandler = AlphaGateXRequestHandler
 
 
