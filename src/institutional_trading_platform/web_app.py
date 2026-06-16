@@ -42,7 +42,10 @@ HTML = """<!doctype html>
     .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin:12px 0; }
     button, input, select { border-radius:10px; border:1px solid var(--line); padding:10px; background:#09192b; color:var(--text); }
     button { cursor:pointer; font-weight:800; }
+    button[disabled] { cursor:not-allowed; opacity:.45; }
     button.danger { background:#3a1320; color:#fecdd3; border-color:#7f1d1d; }
+    .action-result { margin:12px 0; background:#09192b; border:1px solid var(--line); border-radius:12px; padding:12px; }
+    .action-result strong { color:var(--accent); }
     pre { white-space:pre-wrap; overflow:auto; color:#d7e9ff; background:#071523; padding:12px; border-radius:12px; }
     a { color:var(--accent); }
   </style>
@@ -67,8 +70,13 @@ HTML = """<!doctype html>
       <div class="controls">
         <button onclick="loadLiveReadiness()">Check Live Readiness</button>
         <button onclick="previewLiveOrder()">Preview LIMIT Order</button>
-        <button onclick="submitLiveOrder()">Submit Live Order</button>
+        <button id="submit-live-order" onclick="submitLiveOrder()" disabled>Submit Live Order</button>
         <button class="danger" onclick="enableKillSwitch()">Enable Kill Switch</button>
+        <button onclick="resetKillSwitch()">Reset Kill Switch</button>
+      </div>
+      <div class="action-result">
+        <strong>Last Action Result</strong>
+        <div id="last-action-line">No action yet. Tap a control button.</div>
       </div>
       <div class="controls">
         <input id="live-symbol" value="RELIANCE" placeholder="Symbol" />
@@ -91,8 +99,17 @@ HTML = """<!doctype html>
     </section>
   </main>
   <script>
+    let latestPreviewId = null;
     const renderKv = (target, status, keys) => {
       document.getElementById(target).innerHTML = keys.map(key => `<div><strong>${key}</strong><br>${status[key]}</div>`).join('');
+    };
+    const setActionResult = (label, payload) => {
+      const stamp = new Date().toLocaleTimeString();
+      document.getElementById('last-action-line').textContent = `${stamp} · ${label}`;
+      document.getElementById('live-raw').textContent = JSON.stringify(payload, null, 2);
+    };
+    const setSubmitEnabled = (enabled) => {
+      document.getElementById('submit-live-order').disabled = !enabled;
     };
     fetch('/api/demo').then(r => r.json()).then(data => {
       document.getElementById('phases').innerHTML = data.phases.map(phase => `
@@ -113,24 +130,55 @@ HTML = """<!doctype html>
       })
     }
     function loadLiveReadiness() {
+      setActionResult('Loading live readiness...', {status: 'LOADING'});
       fetch('/api/live/readiness').then(r => r.json()).then(status => {
         const keys = ['mode', 'zerodha_credentials_visible', 'access_token_visible', 'expected_user_id_match', 'instruments_csv_exists', 'live_trading_env_enabled', 'manual_approval_required', 'kill_switch_status', 'go_live_allowed'];
         renderKv('live-readiness', status, keys);
-        document.getElementById('live-raw').textContent = JSON.stringify(status, null, 2);
-      })
+        setSubmitEnabled(false);
+        setActionResult(status.block_reasons && status.block_reasons.length ? 'Readiness BLOCKED' : 'Readiness checked', status);
+      }).catch(error => setActionResult('Readiness ERROR', {error: String(error)}))
     }
     function livePayload() {
       return {symbol: document.getElementById('live-symbol').value, exchange: 'NSE', side: document.getElementById('live-side').value, quantity: Number(document.getElementById('live-qty').value), order_type: 'LIMIT', price: Number(document.getElementById('live-price').value), product: 'MIS'};
     }
     function previewLiveOrder() {
-      fetch('/api/live/order/preview', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(livePayload())}).then(r => r.json()).then(status => { document.getElementById('live-raw').textContent = JSON.stringify(status, null, 2); });
+      latestPreviewId = null;
+      setSubmitEnabled(false);
+      setActionResult('Loading order preview...', {status: 'LOADING'});
+      fetch('/api/live/order/preview', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(livePayload())}).then(r => r.json()).then(status => {
+        latestPreviewId = status.preview_id || null;
+        setSubmitEnabled(Boolean(status.can_submit_live_order));
+        setActionResult(status.safety_gate_result === 'PASS' ? 'Preview PASS' : 'Preview BLOCKED', status);
+      }).catch(error => setActionResult('Preview ERROR', {error: String(error)}));
     }
     function submitLiveOrder() {
-      const payload = {...livePayload(), preview_id:'manual-ui-preview', typed_confirmation:'CONFIRM_LIVE_ORDER', approval_mode:true};
-      fetch('/api/live/order/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)}).then(r => r.json()).then(status => { document.getElementById('live-raw').textContent = JSON.stringify(status, null, 2); });
+      if (!latestPreviewId) {
+        setSubmitEnabled(false);
+        setActionResult('Submit BLOCKED: preview required before submit', {status:'BLOCKED', reason:'Preview required before submit'});
+        return;
+      }
+      setActionResult('Submitting live order request...', {status: 'LOADING', preview_id: latestPreviewId});
+      const payload = {...livePayload(), preview_id: latestPreviewId, typed_confirmation:'CONFIRM_LIVE_ORDER', approval_mode:true};
+      fetch('/api/live/order/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)}).then(r => r.json()).then(status => {
+        setSubmitEnabled(false);
+        setActionResult(status.status === 'BLOCKED' ? 'Submit BLOCKED' : 'Submit result', status);
+      }).catch(error => setActionResult('Submit ERROR', {error: String(error)}));
     }
     function enableKillSwitch() {
-      fetch('/api/live/kill-switch', {method:'POST'}).then(r => r.json()).then(status => { document.getElementById('live-raw').textContent = JSON.stringify(status, null, 2); loadLiveReadiness(); });
+      setActionResult('Enabling kill switch...', {status:'LOADING'});
+      fetch('/api/live/kill-switch', {method:'POST'}).then(r => r.json()).then(status => {
+        setSubmitEnabled(false);
+        setActionResult('Kill switch ENABLED', status);
+        loadLiveReadiness();
+      }).catch(error => setActionResult('Kill switch ERROR', {error: String(error)}));
+    }
+    function resetKillSwitch() {
+      setActionResult('Resetting kill switch...', {status:'LOADING'});
+      fetch('/api/live/kill-switch/reset', {method:'POST'}).then(r => r.json()).then(status => {
+        setSubmitEnabled(false);
+        setActionResult('Kill switch RESET', status);
+        loadLiveReadiness();
+      }).catch(error => setActionResult('Kill switch reset ERROR', {error: String(error)}));
     }
     loadShadowStatus();
     loadLiveReadiness();
@@ -202,6 +250,8 @@ class AlphaGateXRequestHandler(BaseHTTPRequestHandler):
             self._send_json(200, _live_order_submit(payload))
         elif path == "/api/live/kill-switch":
             self._send_json(200, _set_kill_switch(True))
+        elif path == "/api/live/kill-switch/reset":
+            self._send_json(200, _set_kill_switch(False))
         else:
             self._send_json(404, {"error": "not_found"})
 
