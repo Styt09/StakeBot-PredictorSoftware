@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 from dataclasses import asdict, dataclass
@@ -94,7 +95,7 @@ HTML = """<!doctype html>
 </head>
 <body>
   <header>
-    <span class="badge info">READ-ONLY MARKET DATA · LIVE TRADING FAIL-CLOSED</span>
+    <span class="badge info">ZERODHA LIVE DATA WHEN CONNECTED · LIVE TRADING FAIL-CLOSED</span>
     <h1>ALPHA-GATE X SHADOW TRADING PLATFORM</h1>
     <h2>Paper Trading → Shadow Trading → Manual Review</h2>
     <p>No fabricated accuracy, confidence, profitability, expected move, OI, PCR, IV, depth, flow, or alpha. Missing evidence returns <strong>DATA_UNAVAILABLE</strong>; insufficient evidence returns <strong>NO_TRADE</strong>. Live trading remains <strong>NO-GO</strong> unless strict manual gates pass.</p>
@@ -112,9 +113,9 @@ HTML = """<!doctype html>
     </section>
 
     <section class="card strong shadow">
-      <span class="badge info">READ-ONLY</span>
+      <span class="badge info">LIVE MARKET WEB APP</span>
       <h2>Live Market Dashboard</h2>
-      <p class="muted">Quotes and chart data are read-only. If Zerodha live data is not connected, this dashboard shows DATA_UNAVAILABLE instead of fake prices.</p>
+      <p class="muted">This panel connects to Zerodha Kite read-only quote/history APIs when credentials and access token are valid. If Zerodha is unavailable, it shows DATA_UNAVAILABLE instead of fake prices.</p>
       <div class="controls">
         <select id="market-symbol"><option>RELIANCE</option><option>INFY</option><option>TCS</option><option>NIFTY</option><option>BANKNIFTY</option></select>
         <button onclick="refreshMarketData()">Refresh Market Data</button>
@@ -134,7 +135,7 @@ HTML = """<!doctype html>
             <span id="chart-status" class="badge warn">Live data unavailable</span>
           </div>
           <canvas id="market-chart" width="900" height="320"></canvas>
-          <div id="chart-message" class="muted">Load chart to check read-only history availability.</div>
+          <div id="chart-message" class="muted">Load chart to check Zerodha history availability.</div>
         </div>
       </div>
       <h3>Watchlist</h3>
@@ -264,7 +265,7 @@ HTML = """<!doctype html>
     }
     function renderWatchlist(payload) {
       const rows = payload.symbols || marketSymbols;
-      document.getElementById('watchlist').innerHTML = rows.map(symbol => `<div class="card watch-card" onclick="selectMarketSymbol('${symbol}')"><span class="badge warn">DATA_UNAVAILABLE</span><h3>${symbol}</h3><p class="muted">Tap to load read-only quote.</p></div>`).join('');
+      document.getElementById('watchlist').innerHTML = rows.map(symbol => `<div class="card watch-card" onclick="selectMarketSymbol('${symbol}')"><span class="badge info">${payload.connection_status === 'ZERODHA_READY_FOR_QUOTE' ? 'LIVE READY' : 'CHECK QUOTE'}</span><h3>${symbol}</h3><p class="muted">Tap to load Zerodha quote.</p></div>`).join('');
     }
     function selectMarketSymbol(symbol) {
       document.getElementById('market-symbol').value = symbol;
@@ -287,7 +288,7 @@ HTML = """<!doctype html>
       fetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}`).then(r => r.json()).then(payload => {
         drawChart(payload.candles || []);
         document.getElementById('chart-status').textContent = payload.validation_status === 'VALIDATED' ? 'CHART READY' : 'Live data unavailable';
-        document.getElementById('chart-message').textContent = payload.validation_status === 'VALIDATED' ? `Showing read-only history for ${symbol}` : 'Live data unavailable. No fabricated chart data is rendered.';
+        document.getElementById('chart-message').textContent = payload.validation_status === 'VALIDATED' ? `Showing Zerodha history for ${symbol}` : 'Live data unavailable. No fabricated chart data is rendered.';
         setMarketRaw(payload);
       }).catch(error => setMarketRaw({status:'ERROR', error:String(error)}));
     }
@@ -623,20 +624,141 @@ def _safety_gates() -> dict[str, Any]:
 
 
 def _market_watchlist() -> dict[str, Any]:
+    client, reason = _kite_client_from_env()
     symbols = tuple(symbol for symbol in ("RELIANCE", "INFY", "TCS", "NIFTY", "BANKNIFTY") if symbol in _symbol_whitelist() or symbol in {"NIFTY", "BANKNIFTY"})
     return {
         "symbols": symbols or ("RELIANCE", "INFY", "TCS", "NIFTY", "BANKNIFTY"),
-        "data_source": "DATA_UNAVAILABLE",
-        "validation_status": "DATA_UNAVAILABLE",
-        "connection_status": "READ_ONLY_MARKET_DATA_NOT_CONNECTED",
+        "data_source": "ZERODHA_KITE_READY" if client is not None else "DATA_UNAVAILABLE",
+        "validation_status": "READY" if client is not None else "DATA_UNAVAILABLE",
+        "connection_status": "ZERODHA_READY_FOR_QUOTE" if client is not None else reason,
         "go_live_allowed": False,
     }
 
 
 def _market_quote(symbol: str) -> dict[str, Any]:
     normalized = symbol.strip().upper() or "RELIANCE"
+    client, reason = _kite_client_from_env()
+    if client is None:
+        return _unavailable_quote(normalized, reason)
+
+    instrument_key = _kite_instrument_key(normalized)
+    try:
+        quote = client.quote([instrument_key])
+        row = quote.get(instrument_key) or {}
+        if not row:
+            return _unavailable_quote(normalized, "ZERODHA_QUOTE_EMPTY")
+        ohlc = row.get("ohlc") or {}
+        last_price = row.get("last_price", "DATA_UNAVAILABLE")
+        close = ohlc.get("close", "DATA_UNAVAILABLE")
+        change_percent: float | str = "DATA_UNAVAILABLE"
+        if isinstance(last_price, (int, float)) and isinstance(close, (int, float)) and close:
+            change_percent = round(((last_price - close) / close) * 100, 2)
+        return {
+            "symbol": normalized,
+            "instrument_key": instrument_key,
+            "ltp": last_price,
+            "open": ohlc.get("open", "DATA_UNAVAILABLE"),
+            "high": ohlc.get("high", "DATA_UNAVAILABLE"),
+            "low": ohlc.get("low", "DATA_UNAVAILABLE"),
+            "close": close,
+            "change_percent": change_percent,
+            "volume": row.get("volume", "DATA_UNAVAILABLE"),
+            "last_update": _as_text(row.get("last_trade_time") or row.get("timestamp")),
+            "data_source": "ZERODHA_KITE_QUOTE",
+            "validation_status": "VALIDATED",
+            "connection_status": "ZERODHA_READ_ONLY_CONNECTED",
+            "go_live_allowed": False,
+        }
+    except Exception as exc:  # pragma: no cover - depends on external Kite runtime.
+        return _unavailable_quote(normalized, f"ZERODHA_QUOTE_API_UNAVAILABLE:{exc.__class__.__name__}")
+
+
+def _market_history(symbol: str) -> dict[str, Any]:
+    normalized = symbol.strip().upper() or "RELIANCE"
+    client, reason = _kite_client_from_env()
+    if client is None:
+        return _unavailable_history(normalized, reason)
+
+    token, token_reason = _instrument_token_for_symbol(normalized)
+    if token is None:
+        return _unavailable_history(normalized, token_reason)
+
+    to_date = datetime.now(UTC)
+    from_date = to_date - timedelta(days=5)
+    try:
+        rows = client.historical_data(token, from_date, to_date, "5minute")
+        candles = tuple(
+            {
+                "timestamp": _as_text(row.get("date")),
+                "open": row.get("open"),
+                "high": row.get("high"),
+                "low": row.get("low"),
+                "close": row.get("close"),
+                "volume": row.get("volume"),
+            }
+            for row in rows
+            if isinstance(row, Mapping)
+        )
+        if not candles:
+            return _unavailable_history(normalized, "ZERODHA_HISTORY_EMPTY")
+        return {
+            "symbol": normalized,
+            "instrument_token": token,
+            "candles": candles,
+            "data_source": "ZERODHA_KITE_HISTORICAL",
+            "validation_status": "VALIDATED",
+            "connection_status": "ZERODHA_READ_ONLY_CONNECTED",
+            "go_live_allowed": False,
+        }
+    except Exception as exc:  # pragma: no cover - depends on external Kite runtime.
+        return _unavailable_history(normalized, f"ZERODHA_HISTORY_API_UNAVAILABLE:{exc.__class__.__name__}")
+
+
+def _kite_client_from_env() -> tuple[Any | None, str]:
+    api_key = os.environ.get("ZERODHA_API_KEY", "").strip()
+    access_token = os.environ.get("ZERODHA_ACCESS_TOKEN", "").strip()
+    if not api_key or not access_token:
+        return None, "ZERODHA_CREDENTIALS_UNAVAILABLE"
+    try:
+        from kiteconnect import KiteConnect  # type: ignore
+    except Exception:
+        return None, "KITECONNECT_LIBRARY_UNAVAILABLE"
+    try:
+        client = KiteConnect(api_key=api_key)
+        client.set_access_token(access_token)
+        return client, "ZERODHA_KITE_CLIENT_READY"
+    except Exception:
+        return None, "KITE_CLIENT_INIT_FAILED"
+
+
+def _kite_instrument_key(symbol: str) -> str:
+    mapping = {"NIFTY": "NSE:NIFTY 50", "BANKNIFTY": "NSE:NIFTY BANK"}
+    return mapping.get(symbol.upper(), f"NSE:{symbol.upper()}")
+
+
+def _instrument_token_for_symbol(symbol: str) -> tuple[int | None, str]:
+    normalized = {"NIFTY": "NIFTY 50", "BANKNIFTY": "NIFTY BANK"}.get(symbol.upper(), symbol.upper())
+    instrument_path = os.environ.get("ZERODHA_INSTRUMENT_DUMP_PATH", "data/instruments.csv").strip() or "data/instruments.csv"
+    path = Path(instrument_path)
+    if not path.exists() or path.stat().st_size <= 0:
+        return None, "INSTRUMENT_CSV_UNAVAILABLE"
+    try:
+        with path.open(newline="", encoding="utf-8") as handle:
+            for row in csv.DictReader(handle):
+                if row.get("exchange", "").upper() != "NSE":
+                    continue
+                if row.get("tradingsymbol", "").upper() != normalized:
+                    continue
+                token = row.get("instrument_token", "").strip()
+                return (int(token), "INSTRUMENT_TOKEN_FOUND") if token else (None, "INSTRUMENT_TOKEN_EMPTY")
+    except Exception:
+        return None, "INSTRUMENT_CSV_READ_FAILED"
+    return None, "INSTRUMENT_TOKEN_NOT_FOUND"
+
+
+def _unavailable_quote(symbol: str, reason: str) -> dict[str, Any]:
     return {
-        "symbol": normalized,
+        "symbol": symbol,
         "ltp": "DATA_UNAVAILABLE",
         "open": "DATA_UNAVAILABLE",
         "high": "DATA_UNAVAILABLE",
@@ -647,23 +769,30 @@ def _market_quote(symbol: str) -> dict[str, Any]:
         "last_update": "DATA_UNAVAILABLE",
         "data_source": "DATA_UNAVAILABLE",
         "validation_status": "DATA_UNAVAILABLE",
-        "connection_status": "ZERODHA_READ_ONLY_QUOTE_NOT_CONNECTED",
+        "connection_status": reason,
         "go_live_allowed": False,
         "message": "Live quote unavailable; no fabricated market price returned.",
     }
 
 
-def _market_history(symbol: str) -> dict[str, Any]:
-    normalized = symbol.strip().upper() or "RELIANCE"
+def _unavailable_history(symbol: str, reason: str) -> dict[str, Any]:
     return {
-        "symbol": normalized,
+        "symbol": symbol,
         "candles": (),
         "data_source": "DATA_UNAVAILABLE",
         "validation_status": "DATA_UNAVAILABLE",
-        "connection_status": "ZERODHA_READ_ONLY_HISTORY_NOT_CONNECTED",
+        "connection_status": reason,
         "go_live_allowed": False,
         "message": "Live history unavailable; chart must render empty state, not fabricated data.",
     }
+
+
+def _as_text(value: Any) -> str:
+    if value is None:
+        return "DATA_UNAVAILABLE"
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
 
 
 def _set_kill_switch(enabled: bool) -> dict[str, Any]:
