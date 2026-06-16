@@ -11,7 +11,16 @@ from institutional_trading_platform import (
     ValidationStatus,
     Venue,
 )
-from institutional_trading_platform.web_app import HTML, _live_order_preview, _live_order_submit, _live_readiness, _set_kill_switch
+from institutional_trading_platform.web_app import (
+    HTML,
+    _live_order_preview,
+    _live_order_submit,
+    _live_readiness,
+    _market_history,
+    _market_quote,
+    _market_watchlist,
+    _set_kill_switch,
+)
 
 
 def _bars(close_step: float = 1.0) -> dict[str, tuple[MarketBar, ...]]:
@@ -76,9 +85,40 @@ def test_aegis_platform_runs_phases_2_through_24_sequentially() -> None:
 def test_web_app_html_contains_alpha_gate_dashboard_contract() -> None:
     assert "ALPHA-GATE X SHADOW TRADING PLATFORM" in HTML
     assert "Real Live Trading Control Panel" in HTML
+    assert "Live Market Dashboard" in HTML
+    assert "market-chart" in HTML
     assert "DATA_UNAVAILABLE" in HTML
     assert "/api/demo" in HTML
     assert "/api/shadow/status" in HTML
+    assert "/api/market/watchlist" in HTML
+    assert "/api/market/quote" in HTML
+    assert "/api/market/history" in HTML
+
+
+def test_market_watchlist_is_read_only_and_fail_closed() -> None:
+    payload = _market_watchlist()
+
+    assert "RELIANCE" in payload["symbols"]
+    assert payload["validation_status"] == "DATA_UNAVAILABLE"
+    assert payload["go_live_allowed"] is False
+
+
+def test_market_quote_returns_data_unavailable_without_fabricated_price() -> None:
+    payload = _market_quote("RELIANCE")
+
+    assert payload["symbol"] == "RELIANCE"
+    assert payload["ltp"] == "DATA_UNAVAILABLE"
+    assert payload["data_source"] == "DATA_UNAVAILABLE"
+    assert payload["go_live_allowed"] is False
+
+
+def test_market_history_returns_empty_chart_state_without_fabrication() -> None:
+    payload = _market_history("RELIANCE")
+
+    assert payload["symbol"] == "RELIANCE"
+    assert payload["candles"] == ()
+    assert payload["validation_status"] == "DATA_UNAVAILABLE"
+    assert payload["go_live_allowed"] is False
 
 
 def test_live_readiness_fails_closed_by_default() -> None:
