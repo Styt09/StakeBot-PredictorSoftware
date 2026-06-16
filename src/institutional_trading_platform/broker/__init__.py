@@ -7,7 +7,7 @@ from .sl_target_monitor import ApprovedTradePlan, ExitReason, ExitSuggestion, SL
 from .zerodha_auth import ZerodhaAuthConfig, ZerodhaAuthService, ZerodhaAuthState, ZerodhaConnectionStatus
 from .zerodha_instrument_manager import InstrumentResolution, InstrumentResolutionStatus, ZerodhaInstrument, ZerodhaInstrumentManager
 from .zerodha_instruments import InstrumentMappingError, ZerodhaInstrumentMapper, ZerodhaInstrumentRecord
-from .zerodha_market_data import ZerodhaTickMappingResult, ZerodhaWebSocketMarketDataAdapter
+from .zerodha_market_data import ReadOnlyKiteTickerWrapper, ZerodhaTickMappingResult, ZerodhaWebSocketMarketDataAdapter
 
 __all__ = [
     "ApprovalModeService",
@@ -24,6 +24,7 @@ __all__ = [
     "InstrumentResolution",
     "InstrumentResolutionStatus",
     "LocalApprovalState",
+    "ReadOnlyKiteTickerWrapper",
     "RealOrderResult",
     "RealOrderSafetyStatus",
     "ReconciliationResult",
