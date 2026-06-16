@@ -48,6 +48,21 @@ def _bars(close_step: float = 1.0) -> dict[str, tuple[MarketBar, ...]]:
     return data
 
 
+def _clear_zerodha_env(monkeypatch) -> None:
+    for key in (
+        "ZERODHA_API_KEY",
+        "ZERODHA_API_SECRET",
+        "ZERODHA_ACCESS_TOKEN",
+        "ZERODHA_EXPECTED_USER_ID",
+        "ZERODHA_USER_ID",
+        "ZERODHA_INSTRUMENT_DUMP_PATH",
+        "LIVE_TRADING_ENABLED",
+        "MANUAL_LIVE_APPROVAL_REQUIRED",
+        "KILL_SWITCH_ENABLED",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+
 def test_signal_quality_blocks_when_timeframes_missing() -> None:
     output = SignalQualityEngine().evaluate({})
 
@@ -87,6 +102,7 @@ def test_web_app_html_contains_alpha_gate_dashboard_contract() -> None:
     assert "Real Live Trading Control Panel" in HTML
     assert "Live Market Dashboard" in HTML
     assert "market-chart" in HTML
+    assert "ZERODHA LIVE DATA WHEN CONNECTED" in HTML
     assert "DATA_UNAVAILABLE" in HTML
     assert "/api/demo" in HTML
     assert "/api/shadow/status" in HTML
@@ -95,7 +111,8 @@ def test_web_app_html_contains_alpha_gate_dashboard_contract() -> None:
     assert "/api/market/history" in HTML
 
 
-def test_market_watchlist_is_read_only_and_fail_closed() -> None:
+def test_market_watchlist_is_safe_without_live_credentials(monkeypatch) -> None:
+    _clear_zerodha_env(monkeypatch)
     payload = _market_watchlist()
 
     assert "RELIANCE" in payload["symbols"]
@@ -103,7 +120,8 @@ def test_market_watchlist_is_read_only_and_fail_closed() -> None:
     assert payload["go_live_allowed"] is False
 
 
-def test_market_quote_returns_data_unavailable_without_fabricated_price() -> None:
+def test_market_quote_returns_data_unavailable_without_fabricated_price(monkeypatch) -> None:
+    _clear_zerodha_env(monkeypatch)
     payload = _market_quote("RELIANCE")
 
     assert payload["symbol"] == "RELIANCE"
@@ -112,7 +130,8 @@ def test_market_quote_returns_data_unavailable_without_fabricated_price() -> Non
     assert payload["go_live_allowed"] is False
 
 
-def test_market_history_returns_empty_chart_state_without_fabrication() -> None:
+def test_market_history_returns_empty_chart_state_without_fabrication(monkeypatch) -> None:
+    _clear_zerodha_env(monkeypatch)
     payload = _market_history("RELIANCE")
 
     assert payload["symbol"] == "RELIANCE"
@@ -121,7 +140,8 @@ def test_market_history_returns_empty_chart_state_without_fabrication() -> None:
     assert payload["go_live_allowed"] is False
 
 
-def test_live_readiness_fails_closed_by_default() -> None:
+def test_live_readiness_fails_closed_by_default(monkeypatch) -> None:
+    _clear_zerodha_env(monkeypatch)
     readiness = _live_readiness()
 
     assert readiness["mode"] == "LIVE_MANUAL_APPROVAL_ONLY"
@@ -130,7 +150,8 @@ def test_live_readiness_fails_closed_by_default() -> None:
     assert "LIVE_TRADING_ENABLED is not true" in readiness["block_reasons"]
 
 
-def test_live_order_preview_blocks_without_gates() -> None:
+def test_live_order_preview_blocks_without_gates(monkeypatch) -> None:
+    _clear_zerodha_env(monkeypatch)
     preview = _live_order_preview({"symbol": "RELIANCE", "exchange": "NSE", "side": "BUY", "quantity": 1, "order_type": "LIMIT", "price": 1, "product": "MIS"})
 
     assert preview["safety_gate_result"] == "BLOCKED"
@@ -138,7 +159,8 @@ def test_live_order_preview_blocks_without_gates() -> None:
     assert preview["go_live_allowed"] is False
 
 
-def test_live_order_submit_blocks_without_valid_preview() -> None:
+def test_live_order_submit_blocks_without_valid_preview(monkeypatch) -> None:
+    _clear_zerodha_env(monkeypatch)
     result = _live_order_submit({"preview_id": "missing", "typed_confirmation": "CONFIRM_LIVE_ORDER", "approval_mode": True})
 
     assert result["status"] == "BLOCKED"
@@ -146,7 +168,8 @@ def test_live_order_submit_blocks_without_valid_preview() -> None:
     assert result["go_live_allowed"] is False
 
 
-def test_kill_switch_blocks_live_readiness() -> None:
+def test_kill_switch_blocks_live_readiness(monkeypatch) -> None:
+    _clear_zerodha_env(monkeypatch)
     _set_kill_switch(True)
     try:
         readiness = _live_readiness()
