@@ -73,7 +73,98 @@ def test_aegis_platform_runs_phases_2_through_24_sequentially() -> None:
         assert payload["provenance"]["validation_status"]
 
 
-def test_web_app_html_contains_aegis_dashboard_contract() -> None:
-    assert "AEGIS QUANT TRADING PLATFORM" in HTML
+def test_web_app_html_contains_alpha_gate_shadow_dashboard_contract() -> None:
+    assert "ALPHA-GATE X SHADOW TRADING PLATFORM" in HTML
+    assert "Paper Trading → Shadow Trading → Manual Review" in HTML
+    assert "Real Shadow Runtime Status" in HTML
     assert "DATA_UNAVAILABLE" in HTML
     assert "/api/demo" in HTML
+    assert "/api/shadow/status" in HTML
+    assert "Last Action Result" in HTML
+    assert "Preview LIMIT Order" in HTML
+    assert "Preview required before submit" in HTML
+    assert "currentPreviewId" in HTML
+    assert "Server restart is required" in HTML
+
+
+def test_shadow_status_fails_closed_without_broker_inputs(monkeypatch) -> None:
+    from institutional_trading_platform.web_app import _shadow_status
+
+    for key in ("ZERODHA_API_KEY", "ZERODHA_ACCESS_TOKEN", "ENABLE_ZERODHA_WEBSOCKET"):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("ZERODHA_INSTRUMENT_DUMP_PATH", "data/instruments.csv")
+
+    status = _shadow_status()
+
+    assert status["mode"] == "PAPER_TRADING"
+    assert status["go_live_allowed"] is False
+    assert status["zerodha_status"] == "ZERODHA_UNAVAILABLE"
+    assert status["total_ticks_processed"] == 0
+    assert status["shadow_recommendation"] == "CONTINUE_PAPER"
+    assert any("missing Zerodha credentials" in reason for reason in status["failure_reasons"])
+
+
+def test_live_readiness_defaults_to_blocked(monkeypatch) -> None:
+    from institutional_trading_platform.web_app import _live_readiness
+
+    for key in (
+        "ZERODHA_API_KEY",
+        "ZERODHA_API_SECRET",
+        "ZERODHA_ACCESS_TOKEN",
+        "ZERODHA_EXPECTED_USER_ID",
+        "LIVE_TRADING_ENABLED",
+        "MANUAL_LIVE_APPROVAL_REQUIRED",
+        "KILL_SWITCH_ENABLED",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("ZERODHA_INSTRUMENT_DUMP_PATH", "data/instruments.csv")
+
+    readiness = _live_readiness()
+
+    assert readiness["mode"] == "LIVE_MANUAL_APPROVAL_ONLY"
+    assert readiness["go_live_allowed"] is False
+    assert readiness["live_trading_env_enabled"] is False
+    assert readiness["manual_approval_required"] is False
+    assert readiness["kill_switch_status"] == "DISABLED"
+
+
+def test_live_order_preview_is_limit_only_and_blocked(monkeypatch) -> None:
+    from institutional_trading_platform.web_app import _live_order_preview
+
+    for key in ("ZERODHA_API_KEY", "ZERODHA_API_SECRET", "ZERODHA_ACCESS_TOKEN", "LIVE_TRADING_ENABLED", "MANUAL_LIVE_APPROVAL_REQUIRED"):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("ZERODHA_INSTRUMENT_DUMP_PATH", "data/instruments.csv")
+
+    preview = _live_order_preview({"symbol": "RELIANCE", "exchange": "NSE", "side": "BUY", "quantity": 1, "order_type": "MARKET", "price": 100.0, "product": "MIS"})
+
+    assert preview["go_live_allowed"] is False
+    assert preview["can_submit_live_order"] is False
+    assert preview["safety_gate_result"] == "BLOCKED"
+    assert "only LIMIT orders are allowed by default" in preview["block_reasons"]
+
+
+def test_live_order_submit_requires_confirmation_and_blocks(monkeypatch) -> None:
+    from institutional_trading_platform.web_app import _live_order_preview, _live_order_submit
+
+    for key in ("ZERODHA_API_KEY", "ZERODHA_API_SECRET", "ZERODHA_ACCESS_TOKEN", "LIVE_TRADING_ENABLED", "MANUAL_LIVE_APPROVAL_REQUIRED"):
+        monkeypatch.delenv(key, raising=False)
+    preview = _live_order_preview({"symbol": "RELIANCE", "exchange": "NSE", "side": "BUY", "quantity": 1, "order_type": "LIMIT", "price": 100.0, "product": "MIS"})
+
+    result = _live_order_submit({"preview_id": preview["preview_id"], "typed_confirmation": "WRONG", "approval_mode": False})
+
+    assert result["status"] == "BLOCKED"
+    assert result["broker_order_id"] is None
+    assert result["go_live_allowed"] is False
+    assert "typed confirmation mismatch" in result["block_reasons"]
+
+
+def test_live_kill_switch_blocks_future_readiness() -> None:
+    from institutional_trading_platform.web_app import _enable_live_kill_switch, _live_readiness
+
+    result = _enable_live_kill_switch()
+    readiness = _live_readiness()
+
+    assert result["kill_switch_status"] == "ENABLED"
+    assert result["go_live_allowed"] is False
+    assert readiness["kill_switch_status"] == "ENABLED"
+    assert readiness["go_live_allowed"] is False

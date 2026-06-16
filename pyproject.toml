@@ -1,6 +1,7 @@
 [build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
+requires = []
+build-backend = "stakebot_build_backend"
+backend-path = ["build_backend"]
 
 [project]
 name = "stakebot-predictorsoftware"
@@ -10,6 +11,9 @@ requires-python = ">=3.10"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "StakeBot PredictorSoftware Contributors" }]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
