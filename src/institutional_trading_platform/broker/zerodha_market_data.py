@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Mapping, Sequence
 
@@ -18,6 +18,61 @@ class ZerodhaTickMappingResult:
     @property
     def ok(self) -> bool:
         return self.tick is not None and not self.reasons
+
+
+@dataclass
+class ReadOnlyKiteTickerWrapper:
+    """Read-only Kite ticker wrapper used for safe startup and tick mapping.
+
+    This wrapper deliberately contains no order placement, order modification,
+    order cancellation, or broker mutation methods. It can be constructed without
+    Zerodha credentials so the web app can start in degraded NO-GO mode.
+    """
+
+    token_to_symbol: Mapping[int, tuple[str, str]] = field(default_factory=dict)
+    event_bus: EventBus | None = None
+    connected: bool = False
+    go_live_allowed: bool = False
+    unavailable_reasons: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        self.adapter = ZerodhaWebSocketMarketDataAdapter(self.token_to_symbol, event_bus=self.event_bus)
+
+    @property
+    def status(self) -> str:
+        """Return safe read-only connection status."""
+
+        return "READ_ONLY_CONNECTED" if self.connected else "ZERODHA_UNAVAILABLE"
+
+    def map_tick(self, payload: Mapping[str, object], received_at: datetime | None = None) -> ZerodhaTickMappingResult:
+        """Map a Kite ticker payload into an internal tick without any broker mutation."""
+
+        return self.adapter.map_tick(payload, received_at=received_at)
+
+    def connect(self) -> bool:
+        """No-op read-only connect placeholder; never opens live order capability."""
+
+        self.connected = False
+        self.go_live_allowed = False
+        if not self.unavailable_reasons:
+            self.unavailable_reasons = ("read-only wrapper does not establish live broker sessions",)
+        return False
+
+    def disconnect(self) -> None:
+        """Mark read-only wrapper disconnected."""
+
+        self.connected = False
+        self.go_live_allowed = False
+
+    def as_dict(self) -> dict[str, object]:
+        """Return dashboard-safe status payload."""
+
+        return {
+            "status": self.status,
+            "read_only": True,
+            "go_live_allowed": False,
+            "reasons": list(self.unavailable_reasons),
+        }
 
 
 class ZerodhaWebSocketMarketDataAdapter:
