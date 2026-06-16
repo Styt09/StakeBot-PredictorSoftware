@@ -1,4 +1,4 @@
-"""Small stdlib web application for the AEGIS Quant Trading Platform."""
+"""Small stdlib web application for the ALPHA-GATE X Shadow Trading Platform."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ HTML = """<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AEGIS Quant Trading Platform</title>
+  <title>ALPHA-GATE X Shadow Trading Platform</title>
   <style>
     :root { color-scheme: dark; --bg:#07111f; --panel:#0f1f35; --line:#24415f; --text:#e8f2ff; --muted:#9eb5d1; --accent:#6ee7b7; --warn:#fbbf24; }
     body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; background: radial-gradient(circle at top, #12345a, var(--bg)); color:var(--text); }
@@ -35,17 +35,17 @@ HTML = """<!doctype html>
 </head>
 <body>
   <header>
-    <h1>AEGIS QUANT TRADING PLATFORM</h1>
-    <h2>Master Implementation Program · Phase 2 → Phase 24</h2>
-    <p>No fabricated accuracy, confidence, profitability, expected move, OI, PCR, IV, depth, flow, or alpha. Missing evidence returns <strong>DATA_UNAVAILABLE</strong>; insufficient evidence returns <strong>NO_TRADE</strong>.</p>
+    <h1>ALPHA-GATE X SHADOW TRADING PLATFORM</h1>
+    <h2>Paper Trading → Shadow Trading → Manual Review</h2>
+    <p>No fabricated accuracy, confidence, profitability, expected move, OI, PCR, IV, depth, flow, or alpha. Missing evidence returns <strong>DATA_UNAVAILABLE</strong>; insufficient evidence returns <strong>NO_TRADE</strong>. Live trading remains <strong>NO-GO</strong>.</p>
   </header>
   <main>
     <section class="principles">
-      <div class="card"><strong>Data Source</strong><p>Every API payload includes data_source.</p></div>
-      <div class="card"><strong>Data Timestamp</strong><p>Every API payload includes data_timestamp.</p></div>
+      <div class="card"><strong>Runtime Mode</strong><p>Paper/shadow validation first. Live auto trading is disabled.</p></div>
+      <div class="card"><strong>Data Source</strong><p>Every API payload includes data_source and timestamp.</p></div>
       <div class="card"><strong>Validation Status</strong><p>Every phase reports validation_status before outputs are considered.</p></div>
     </section>
-    <h2>Sequential Phase Console</h2>
+    <h2>Shadow Trading Preview Console</h2>
     <div id="phases" class="grid"></div>
   </main>
   <script>
@@ -64,10 +64,10 @@ HTML = """<!doctype html>
 """
 
 
-class AegisRequestHandler(BaseHTTPRequestHandler):
-    """HTTP handler exposing the AEGIS dashboard and JSON endpoints."""
+class AlphaGateXRequestHandler(BaseHTTPRequestHandler):
+    """HTTP handler exposing the ALPHA-GATE X dashboard and JSON endpoints."""
 
-    server_version = "AegisQuantWeb/1.0"
+    server_version = "AlphaGateXShadowWeb/1.0"
 
     def do_GET(self) -> None:  # noqa: N802 - stdlib handler API
         """Route dashboard, health, status, and demo API requests."""
@@ -76,12 +76,12 @@ class AegisRequestHandler(BaseHTTPRequestHandler):
         if path == "/":
             self._send(200, HTML, "text/html; charset=utf-8")
         elif path == "/health":
-            self._send_json(200, {"status": "ok", "service": "aegis-quant-trading-platform"})
+            self._send_json(200, {"status": "ok", "service": "alpha-gate-x-shadow-trading-platform"})
         elif path == "/api/status":
-            self._send_json(200, {"phase_1": "complete", "active_scope": "phase_2_to_phase_24", "principle": "no fabricated trading claims"})
+            self._send_json(200, {"phase_1": "complete", "active_scope": "paper_to_shadow_trading", "principle": "no fabricated trading claims", "go_live_allowed": False})
         elif path == "/api/demo":
             phases = [phase.as_dict() for phase in AegisQuantPlatform().run(_demo_bars())]
-            self._send_json(200, {"phases": phases})
+            self._send_json(200, {"mode": "UI_PREVIEW_ONLY", "go_live_allowed": False, "phases": phases})
         else:
             self._send_json(404, {"error": "not_found"})
 
@@ -101,9 +101,9 @@ class AegisRequestHandler(BaseHTTPRequestHandler):
 
 
 def run(host: str = "127.0.0.1", port: int = 8080) -> None:
-    """Run the AEGIS web app with Python's stdlib HTTP server."""
+    """Run the ALPHA-GATE X web app with Python's stdlib HTTP server."""
 
-    ThreadingHTTPServer((host, port), AegisRequestHandler).serve_forever()
+    ThreadingHTTPServer((host, port), AlphaGateXRequestHandler).serve_forever()
 
 
 def _demo_bars() -> dict[str, tuple[MarketBar, ...]]:
@@ -129,6 +129,10 @@ def _demo_bars() -> dict[str, tuple[MarketBar, ...]]:
             )
         result[timeframe] = tuple(bars)
     return result
+
+
+# Backward-compatible alias for older tests/imports.
+AegisRequestHandler = AlphaGateXRequestHandler
 
 
 if __name__ == "__main__":
