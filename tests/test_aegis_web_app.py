@@ -11,7 +11,7 @@ from institutional_trading_platform import (
     ValidationStatus,
     Venue,
 )
-from institutional_trading_platform.web_app import HTML
+from institutional_trading_platform.web_app import HTML, _live_order_preview, _live_order_submit, _live_readiness, _set_kill_switch
 
 
 def _bars(close_step: float = 1.0) -> dict[str, tuple[MarketBar, ...]]:
@@ -73,7 +73,44 @@ def test_aegis_platform_runs_phases_2_through_24_sequentially() -> None:
         assert payload["provenance"]["validation_status"]
 
 
-def test_web_app_html_contains_aegis_dashboard_contract() -> None:
-    assert "AEGIS QUANT TRADING PLATFORM" in HTML
+def test_web_app_html_contains_alpha_gate_dashboard_contract() -> None:
+    assert "ALPHA-GATE X SHADOW TRADING PLATFORM" in HTML
+    assert "Real Live Trading Control Panel" in HTML
     assert "DATA_UNAVAILABLE" in HTML
     assert "/api/demo" in HTML
+    assert "/api/shadow/status" in HTML
+
+
+def test_live_readiness_fails_closed_by_default() -> None:
+    readiness = _live_readiness()
+
+    assert readiness["mode"] == "LIVE_MANUAL_APPROVAL_ONLY"
+    assert readiness["go_live_allowed"] is False
+    assert readiness["live_trading_env_enabled"] is False
+    assert "LIVE_TRADING_ENABLED is not true" in readiness["block_reasons"]
+
+
+def test_live_order_preview_blocks_without_gates() -> None:
+    preview = _live_order_preview({"symbol": "RELIANCE", "exchange": "NSE", "side": "BUY", "quantity": 1, "order_type": "LIMIT", "price": 1, "product": "MIS"})
+
+    assert preview["safety_gate_result"] == "BLOCKED"
+    assert preview["can_submit_live_order"] is False
+    assert preview["go_live_allowed"] is False
+
+
+def test_live_order_submit_blocks_without_valid_preview() -> None:
+    result = _live_order_submit({"preview_id": "missing", "typed_confirmation": "CONFIRM_LIVE_ORDER", "approval_mode": True})
+
+    assert result["status"] == "BLOCKED"
+    assert result["broker_order_id"] is None
+    assert result["go_live_allowed"] is False
+
+
+def test_kill_switch_blocks_live_readiness() -> None:
+    _set_kill_switch(True)
+    try:
+        readiness = _live_readiness()
+        assert readiness["kill_switch_status"] == "ENABLED"
+        assert "kill switch enabled" in readiness["block_reasons"]
+    finally:
+        _set_kill_switch(False)
