@@ -80,6 +80,19 @@ Phase 6 paper trading hardening foundation has been added:
 - Read-only paper orders/trades endpoint patch script.
 - Phase 6 tests.
 
+## Phase 7 status
+
+Phase 7 shadow trading foundation has been added:
+
+- ShadowTradingEngine and ShadowTradingState.
+- Shadow order lifecycle statuses: SHADOW_CREATED, SHADOW_VALIDATED, SHADOW_RISK_APPROVED, SHADOW_BLOCKED, SHADOW_FILLED_THEORETICAL, SHADOW_CANCELLED, SHADOW_FAILED.
+- Theoretical live-data fill behavior using validated quote/LTP only.
+- Theoretical shadow position tracking and P&L.
+- Shadow brokerage/slippage placeholders.
+- Shadow audit log, report, drift placeholder, and accuracy placeholder.
+- Opt-in web_app patch script for shadow endpoints and dashboard card.
+- Phase 7 tests.
+
 ## Phase order
 
 1. Safe config layer — **foundation added**
@@ -88,9 +101,7 @@ Phase 6 paper trading hardening foundation has been added:
 4. Signal safety wrapper — **foundation added**
 5. Risk engine — **foundation added**
 6. Paper trading hardening — **foundation added**
-7. Shadow trading
-   - Add theoretical order tracking with no real broker action.
-   - Add shadow report.
+7. Shadow trading — **foundation added**
 8. Broker adapter safety
    - Add adapter interface.
    - Add broker health endpoint.
@@ -118,5 +129,5 @@ Phase 6 paper trading hardening foundation has been added:
 
 ## Current recommended verdict
 
-Current status: PAPER-READY candidate, still NO-GO for real-money trading.
-Next target: SHADOW-READY after live-data shadow reports.
+Current status: SHADOW-READY candidate, still NO-GO for real-money trading.
+Next target: Broker adapter safety and broker health checks without broker mutation.
