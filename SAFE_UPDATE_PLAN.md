@@ -13,134 +13,7 @@ Primary rule: preserve the existing app. Do not delete existing UI, routes, APIs
 - Weak signal must show NO_TRADE.
 - Any real-money uncertainty must stay BLOCKED.
 
-## Phase 1 status
-
-Phase 1 safe configuration foundation has been added:
-
-- Safe config module.
-- Trading mode validation defaults.
-- Secret masking helpers.
-- Safe public config structure.
-- Updated `.env.example`.
-- `README_ENV_SETUP.md`.
-- Config tests.
-
-## Phase 2 status
-
-Phase 2 trading-mode wiring has been prepared as an opt-in local patch script because some Codespaces contain uncommitted `web_app.py` edits.
-
-- `scripts/patch_phase2_trading_modes.py`
-- `tests/test_phase2_trading_modes_contract.py`
-
-## Phase 3 status
-
-Phase 3 market data safety foundation has been added:
-
-- MarketDataProvider interface.
-- ExistingDataProvider adapter.
-- MarketDataHealthService with CONNECTED, RECONNECTING, DISCONNECTED, STALE, DATA_UNAVAILABLE states.
-- Market open/closed helper using Asia/Kolkata.
-- Stale-data fail-closed helper.
-- Opt-in web_app patch script for `/api/market-data/health` and dashboard card.
-- Phase 3 tests.
-
-## Phase 4 status
-
-Phase 4 signal safety foundation has been added:
-
-- Safe signal wrapper preserving existing signal logic.
-- Standard safe signal format.
-- Confidence grade.
-- Explicit blocked reasons.
-- Stale/missing data fail-closed behavior.
-- BUY/SELL checks for stop-loss, targets, risk-reward, and confidence.
-- Opt-in web_app patch script for `/api/signal/safe` and dashboard card.
-- Phase 4 tests.
-
-## Phase 5 status
-
-Phase 5 central risk engine foundation has been added:
-
-- Central `RiskEngine` and `RiskInput` model.
-- Required mode, market, instrument, data, signal, stop-loss, target, risk-reward, quantity, position, loss-limit, duplicate, cooldown, kill-switch, broker, and drift checks.
-- Fail-closed risk output with `go_live_allowed=false`.
-- Opt-in web_app patch script for `/api/risk/check`, dashboard card, and paper order pre-check.
-- Phase 5 tests.
-
-## Phase 6 status
-
-Phase 6 paper trading hardening foundation has been added:
-
-- PaperOrderManager and PaperExecutionState.
-- Order lifecycle statuses: CREATED, VALIDATED, RISK_APPROVED, BLOCKED, PAPER_FILLED, CANCELLED, FAILED.
-- Validated quote/LTP virtual fill behavior.
-- Virtual paper position tracking and P&L.
-- Brokerage/slippage placeholders.
-- Paper audit log.
-- Read-only paper orders/trades endpoint patch script.
-- Phase 6 tests.
-
-## Phase 7 status
-
-Phase 7 shadow trading foundation has been added:
-
-- ShadowTradingEngine and ShadowTradingState.
-- Shadow order lifecycle statuses: SHADOW_CREATED, SHADOW_VALIDATED, SHADOW_RISK_APPROVED, SHADOW_BLOCKED, SHADOW_FILLED_THEORETICAL, SHADOW_CANCELLED, SHADOW_FAILED.
-- Theoretical live-data fill behavior using validated quote/LTP only.
-- Theoretical shadow position tracking and P&L.
-- Shadow brokerage/slippage placeholders.
-- Shadow audit log, report, drift placeholder, and accuracy placeholder.
-- Opt-in web_app patch script for shadow endpoints and dashboard card.
-- Phase 7 tests.
-
-## Phase 8 status
-
-Phase 8 broker adapter safety foundation has been added:
-
-- BrokerAdapter protocol/interface.
-- ZerodhaReadOnlyAdapter for broker read-only operations.
-- BlockedBrokerMutationAdapter for fail-closed place/modify/cancel/exit methods.
-- BrokerHealthService with sanitized broker health output.
-- Secret masking/sanitization for broker read-only payloads.
-- Opt-in web_app patch script for broker health, broker quote, broker status, broker blocked mutation endpoints, and broker safety dashboard card.
-- Phase 8 tests.
-
-## Phase 9 status
-
-Phase 9 persistent kill switch foundation has been added:
-
-- PersistentKillSwitch module with local JSON state.
-- Storage path `.alpha_gate_state/kill_switch.json`.
-- Activate, reset, status, and fail-closed corrupt/unreadable handling.
-- Reset confirmation phrase `RESET_KILL_SWITCH`.
-- Opt-in web_app patch script for `/api/kill-switch/status`, `/api/kill-switch/activate`, `/api/kill-switch/reset`, risk integration, paper block, shadow block, and dashboard card.
-- Phase 9 tests.
-
-## Phase 10 status
-
-Phase 10 durable audit logs and evidence reports foundation has been added:
-
-- DurableAuditLog and AuditEvent module.
-- Storage path `.alpha_gate_state/audit_log.jsonl`.
-- JSONL event writing, recent reads, export, and summary reports.
-- Secret sanitization before persistence.
-- Corrupt-line handling as `AUDIT_LINE_UNREADABLE`.
-- Opt-in web_app patch script for `/api/audit/recent`, `/api/audit/report`, `/api/audit/export`, startup logging, broker health logging, and live-order-block logging.
-- Phase 10 tests.
-
-## Phase 11 status
-
-Phase 11 operational validation reports and readiness gates foundation has been added:
-
-- ReadinessGateEvaluator and ReadinessInputs module.
-- Machine-readable readiness gates.
-- Human-readable readiness report.
-- Go-live checklist with PASS/FAIL/NOT_IMPLEMENTED.
-- Live readiness forced to `false` and `NO_GO`.
-- Opt-in web_app patch script for `/api/readiness/gates`, `/api/readiness/report`, `/api/readiness/go-live-checklist`, and dashboard card.
-- Phase 11 tests.
-
-## Phase order
+## Completed phases
 
 1. Safe config layer — **foundation added**
 2. Trading modes — **patch script added**
@@ -153,20 +26,29 @@ Phase 11 operational validation reports and readiness gates foundation has been 
 9. Persistent kill switch — **foundation added**
 10. Durable audit logs — **foundation added**
 11. Operational readiness gates — **foundation added**
-12. Tests
-   - Existing routes still render.
-   - Safe defaults.
-   - Secret masking.
-   - Risk blocks missing stop-loss and stale data.
-   - Kill switch blocks orders.
-   - Paper order works.
-   - Broker mutation is blocked by default.
-13. Production docs
-   - Add deployment, trading modes, risk controls, and live checklist docs.
-14. Final report
-   - Report preserved features, changed files, added files, tests, current mode, and final verdict.
+12. Production docs and final CTO report — **foundation added**
 
-## Current recommended verdict
+## Phase 12 status
 
-Current status: SHADOW-READY + BROKER-SAFE + PERSISTENT-SAFETY + AUDIT-EVIDENCE + READINESS-GATED candidate, still NO-GO for real-money trading.
-Next target: production docs and final CTO readiness report.
+Phase 12 production documentation and final CTO readiness reporting has been added:
+
+- `FINAL_CTO_READINESS_REPORT.md`
+- `PRODUCTION_RUNBOOK.md`
+- `PAPER_TRADING_GUIDE.md`
+- `SHADOW_TRADING_GUIDE.md`
+- `BROKER_SAFETY_GUIDE.md`
+- `KILL_SWITCH_RUNBOOK.md`
+- `AUDIT_EVIDENCE_GUIDE.md`
+- `GO_LIVE_NO_GO_CHECKLIST.md`
+- `INCIDENT_RESPONSE_PLAN.md`
+- `SYSTEM_STATUS_SUMMARY.md`
+- `tests/test_phase12_docs.py`
+
+## Final recommended verdict
+
+- PAPER: READY CANDIDATE
+- SHADOW: READY CANDIDATE
+- LIVE: NO-GO
+- go_live_allowed=false
+
+Real-money live trading remains blocked until 30 trading days of shadow evidence, zero drift, broker reconciliation, persistent production storage, monitoring, legal/compliance review, credential rotation, disaster recovery testing, and human approval workflow are complete.
