@@ -1,0 +1,19 @@
+# Local secrets / runtime state
+.env
+.env.*
+.env_backups/
+.alpha_gate_state/
+.alpha_gate_backups/
+__pycache__/
+.pytest_cache/
+
+# Python
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+
+# Logs
+*.log
