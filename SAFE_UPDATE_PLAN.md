@@ -128,6 +128,18 @@ Phase 10 durable audit logs and evidence reports foundation has been added:
 - Opt-in web_app patch script for `/api/audit/recent`, `/api/audit/report`, `/api/audit/export`, startup logging, broker health logging, and live-order-block logging.
 - Phase 10 tests.
 
+## Phase 11 status
+
+Phase 11 operational validation reports and readiness gates foundation has been added:
+
+- ReadinessGateEvaluator and ReadinessInputs module.
+- Machine-readable readiness gates.
+- Human-readable readiness report.
+- Go-live checklist with PASS/FAIL/NOT_IMPLEMENTED.
+- Live readiness forced to `false` and `NO_GO`.
+- Opt-in web_app patch script for `/api/readiness/gates`, `/api/readiness/report`, `/api/readiness/go-live-checklist`, and dashboard card.
+- Phase 11 tests.
+
 ## Phase order
 
 1. Safe config layer — **foundation added**
@@ -140,9 +152,7 @@ Phase 10 durable audit logs and evidence reports foundation has been added:
 8. Broker adapter safety — **foundation added**
 9. Persistent kill switch — **foundation added**
 10. Durable audit logs — **foundation added**
-11. UI additions
-   - Add cards only; do not remove old design.
-   - Show mode, data health, broker health, kill switch, risk block, PnL, and positions.
+11. Operational readiness gates — **foundation added**
 12. Tests
    - Existing routes still render.
    - Safe defaults.
@@ -158,5 +168,5 @@ Phase 10 durable audit logs and evidence reports foundation has been added:
 
 ## Current recommended verdict
 
-Current status: SHADOW-READY + BROKER-SAFE + PERSISTENT-SAFETY + AUDIT-EVIDENCE candidate, still NO-GO for real-money trading.
-Next target: operational validation reports and final readiness gates.
+Current status: SHADOW-READY + BROKER-SAFE + PERSISTENT-SAFETY + AUDIT-EVIDENCE + READINESS-GATED candidate, still NO-GO for real-money trading.
+Next target: production docs and final CTO readiness report.
