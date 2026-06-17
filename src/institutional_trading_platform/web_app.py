@@ -37,7 +37,7 @@ HTML = """<!doctype html>
     }
     * { box-sizing:border-box; }
     body { margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; background:radial-gradient(circle at 20% 0%, rgba(103,232,249,.20), transparent 34%), radial-gradient(circle at 85% 8%, rgba(110,231,183,.16), transparent 30%), linear-gradient(135deg, #06101f 0%, #09162b 48%, #07111f 100%); color:var(--text); min-height:100vh; }
-    header { padding:34px min(5vw,70px) 22px; border-bottom:1px solid var(--line); position:relative; overflow:hidden; }
+    header { padding:34px min(5vw,70px) 22px; border-bottom:1px solid var(--line); }
     h1 { margin:0; font-size:clamp(2rem, 5vw, 4.8rem); letter-spacing:.07em; line-height:1.02; }
     h2 { margin:.25rem 0 0; color:var(--accent2); font-weight:850; }
     h3 { margin:.25rem 0; } p { color:#d8e7f7; } main { padding:24px min(5vw,70px) 56px; }
@@ -55,9 +55,13 @@ HTML = """<!doctype html>
     .kv div { background:rgba(5,17,31,.72); border:1px solid var(--line); border-radius:14px; padding:11px; min-height:58px; }
     .kv strong { color:#dbeafe; display:block; font-size:.78rem; opacity:.9; }
     .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; margin:12px 0; }
-    button, input, select { border-radius:13px; border:1px solid var(--line); padding:11px 12px; background:rgba(5,17,31,.82); color:var(--text); min-height:42px; }
-    button { cursor:pointer; font-weight:900; } button:hover { border-color:rgba(103,232,249,.55); } button[disabled] { cursor:not-allowed; opacity:.45; }
+    button, input, select, summary { border-radius:13px; border:1px solid var(--line); padding:11px 12px; background:rgba(5,17,31,.82); color:var(--text); min-height:42px; }
+    button { cursor:pointer; font-weight:900; } button:hover, summary:hover { border-color:rgba(103,232,249,.55); } button[disabled] { cursor:not-allowed; opacity:.45; }
     button.danger { background:#3a1320; color:#fecdd3; border-color:#7f1d1d; }
+    details.future-roadmap { margin-top:24px; } details.future-roadmap summary { cursor:pointer; font-weight:950; list-style:none; }
+    details.future-roadmap summary::-webkit-details-marker { display:none; }
+    .unlock-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin:12px 0 16px; }
+    .unlock-list div { background:rgba(5,17,31,.70); border:1px dashed rgba(251,191,36,.35); border-radius:14px; padding:12px; }
     .action-result { margin:12px 0; background:rgba(5,17,31,.72); border:1px solid var(--line); border-radius:14px; padding:13px; }
     .action-result strong { color:var(--accent2); } .market-hero { display:grid; grid-template-columns:minmax(0, 1fr); gap:16px; }
     .quote-value { font-size:clamp(1.8rem,7vw,4rem); font-weight:950; line-height:1; }
@@ -76,8 +80,8 @@ HTML = """<!doctype html>
 <body>
   <header>
     <span class="badge info">ZERODHA LIVE DATA WHEN CONNECTED · LIVE TRADING FAIL-CLOSED</span>
-    <h1>ALPHA-GATE X SHADOW TRADING PLATFORM</h1>
-    <h2>Live Signal Engine → Manual Review → Optional Auto-Trade Gate</h2>
+    <h1>ALPHA-GATE X TRADING TERMINAL</h1>
+    <h2>Live Market → Live Signal Engine → Manual Review → Optional Auto-Trade Gate</h2>
     <p>No fabricated accuracy, confidence, profitability, expected move, OI, PCR, IV, depth, flow, or alpha. Missing evidence returns <strong>DATA_UNAVAILABLE</strong>; weak evidence returns <strong>NO_TRADE</strong>.</p>
   </header>
   <main>
@@ -94,7 +98,7 @@ HTML = """<!doctype html>
       <div class="card"><strong>Validation Status</strong><p>BUY/SELL only appears when real candle evidence is validated.</p></div>
     </section>
 
-    <section class="card strong shadow">
+    <section class="card strong shadow" id="live-terminal">
       <span class="badge info">LIVE MARKET WEB APP</span>
       <h2>Live Market Dashboard</h2>
       <p class="muted">This panel connects to Zerodha Kite read-only quote/history APIs when credentials and access token are valid.</p>
@@ -121,7 +125,7 @@ HTML = """<!doctype html>
         </div>
         <div class="card chart-wrap">
           <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
-            <h3>Price Chart</h3>
+            <h3>Candlestick Chart</h3>
             <span id="chart-status" class="badge warn">Live data unavailable</span>
           </div>
           <canvas id="market-chart" width="900" height="320"></canvas>
@@ -133,7 +137,7 @@ HTML = """<!doctype html>
       <pre id="market-raw">Market payload will appear here.</pre>
     </section>
 
-    <section class="card strong shadow">
+    <section class="card strong shadow" id="signal-terminal">
       <span class="badge info">LIVE SIGNAL ENGINE</span>
       <h2>Trading Terminal Signal</h2>
       <div class="terminal-grid">
@@ -163,7 +167,7 @@ HTML = """<!doctype html>
       </div>
     </section>
 
-    <section class="card shadow">
+    <section class="card shadow" id="manual-order-terminal">
       <span class="badge danger">LIVE MONEY RISK · MANUAL APPROVAL ONLY</span>
       <h2>Real Live Trading Control Panel</h2>
       <p>Automatic live trading is disabled. Live order submit remains blocked unless credentials, instruments, env gates, approval, idempotency, and risk checks pass.</p>
@@ -185,8 +189,20 @@ HTML = """<!doctype html>
       <pre id="live-raw">Live controls are fail-closed. Press Check Live Readiness.</pre>
     </section>
 
-    <h2>Shadow Trading Preview Console</h2>
-    <div id="phases" class="grid"></div>
+    <details class="card strong future-roadmap" id="future-modules">
+      <summary>Future Institutional Modules · intentionally locked</summary>
+      <p class="muted"><strong>Future modules are intentionally locked until enough live evidence is collected. No fake validation.</strong></p>
+      <div class="unlock-list">
+        <div><strong>Drift Detection</strong><br>Requires 30–60 days signal/outcome logs.</div>
+        <div><strong>Automated Retraining</strong><br>Requires validated drift + backtest gates.</div>
+        <div><strong>Machine Learning Foundation</strong><br>Requires labeled dataset and OOS validation.</div>
+        <div><strong>Ensembles</strong><br>Requires multiple validated ML models.</div>
+        <div><strong>Advanced AI</strong><br>Requires validated ML + governance gates.</div>
+        <div><strong>Financial LLM</strong><br>Requires verified financial/news data source.</div>
+      </div>
+      <div id="phases" class="grid"></div>
+    </details>
+
     <section class="card shadow">
       <span class="badge warn">READ-ONLY · GO-LIVE DISABLED</span>
       <h2>Real Shadow Runtime Status</h2>
@@ -209,13 +225,24 @@ HTML = """<!doctype html>
     const stampRefresh = () => { lastSuccessfulRefresh = new Date(); document.getElementById('last-refresh').textContent = `Last refresh: ${lastSuccessfulRefresh.toLocaleTimeString()}`; document.getElementById('refresh-badge').textContent = `Last refresh: ${lastSuccessfulRefresh.toLocaleTimeString()} · Next: --s`; };
     const setPollingStatus = (status, kind='info') => { document.getElementById('refresh-status').textContent = status; document.getElementById('polling-badge').textContent = status; document.getElementById('polling-badge').className = `badge ${kind}`; };
     const clearPollingTimers = () => { Object.keys(pollingTimers).forEach(key => { if (pollingTimers[key]) { clearInterval(pollingTimers[key]); pollingTimers[key] = null; } }); };
-    const quoteIntervalMs = () => document.hidden ? 15000 : 3000;
+    const quoteIntervalMs = () => document.hidden ? 3000 : 1000;
     function updateCountdown() { const remaining = Math.max(0, Math.ceil((nextQuoteRefreshAt - Date.now()) / 1000)); document.getElementById('next-refresh').textContent = `Next refresh: ${remaining}s`; if (lastSuccessfulRefresh) document.getElementById('refresh-badge').textContent = `Last refresh: ${lastSuccessfulRefresh.toLocaleTimeString()} · Next: ${remaining}s`; }
     function setAutoRefresh(enabled) { autoRefreshEnabled = enabled; document.getElementById('auto-refresh-toggle').value = String(enabled); if (enabled) startAutoRefresh(); else { clearPollingTimers(); setPollingStatus('PAUSED', 'warn'); document.getElementById('next-refresh').textContent = 'Next refresh: paused'; } }
-    function startAutoRefresh() { clearPollingTimers(); setPollingStatus('LIVE POLLING ON', 'info'); const runQuote = () => { if (!autoRefreshEnabled) return; nextQuoteRefreshAt = Date.now() + quoteIntervalMs(); refreshMarketData(true); }; const runSignal = () => autoRefreshEnabled && loadLiveSignal(true); const runChart = () => autoRefreshEnabled && loadChart(true); const runAccuracy = () => autoRefreshEnabled && loadAccuracyReport(true); runQuote(); runSignal(); runChart(); runAccuracy(); pollingTimers.quote = setInterval(runQuote, quoteIntervalMs()); pollingTimers.signal = setInterval(runSignal, 15000); pollingTimers.chart = setInterval(runChart, 60000); pollingTimers.accuracy = setInterval(runAccuracy, 60000); pollingTimers.countdown = setInterval(updateCountdown, 1000); }
+    function startAutoRefresh() { clearPollingTimers(); setPollingStatus('LIVE POLLING ON', 'info'); const runQuote = () => { if (!autoRefreshEnabled) return; nextQuoteRefreshAt = Date.now() + quoteIntervalMs(); refreshMarketData(true); }; const runSignal = () => autoRefreshEnabled && loadLiveSignal(true); const runChart = () => autoRefreshEnabled && loadChart(true); const runAccuracy = () => autoRefreshEnabled && loadAccuracyReport(true); runQuote(); runSignal(); runChart(); runAccuracy(); pollingTimers.quote = setInterval(runQuote, quoteIntervalMs()); pollingTimers.signal = setInterval(runSignal, 5000); pollingTimers.chart = setInterval(runChart, 15000); pollingTimers.accuracy = setInterval(runAccuracy, 30000); pollingTimers.countdown = setInterval(updateCountdown, 1000); }
     document.addEventListener('visibilitychange', () => { if (autoRefreshEnabled) startAutoRefresh(); });
 
-    fetch('/api/demo').then(r => r.json()).then(data => { document.getElementById('phases').innerHTML = data.phases.map(phase => `<article class="card phase"><span class="badge ${phase.status === 'BLOCKED' ? 'warn' : 'info'}">PHASE ${phase.phase} · ${phase.status}</span><h3>${phase.name}</h3><p><strong>Source:</strong> ${phase.provenance.data_source}<br><strong>Timestamp:</strong> ${phase.provenance.data_timestamp}<br><strong>Validation:</strong> ${phase.provenance.validation_status}</p><pre>${JSON.stringify(phase.outputs, null, 2)}</pre></article>`).join('') })
+    const futureUnlock = {
+      'Drift Detection': 'Requires 30–60 days signal/outcome logs.',
+      'Automated Retraining': 'Requires validated drift + backtest gates.',
+      'Machine Learning Foundation': 'Requires labeled dataset and OOS validation.',
+      'Ensembles': 'Requires multiple validated ML models.',
+      'Advanced AI': 'Requires validated ML + governance gates.',
+      'Financial LLM': 'Requires verified financial/news data source.'
+    };
+    fetch('/api/demo').then(r => r.json()).then(data => {
+      const future = data.phases.filter(phase => phase.phase >= 18 || futureUnlock[phase.name]);
+      document.getElementById('phases').innerHTML = future.map(phase => `<article class="card phase"><span class="badge ${phase.status === 'BLOCKED' ? 'warn' : 'info'}">PHASE ${phase.phase} · ${phase.status}</span><h3>${phase.name}</h3><p><strong>Unlock criteria:</strong> ${futureUnlock[phase.name] || 'Requires validated live evidence and governance gates.'}</p><p><strong>Source:</strong> ${phase.provenance.data_source}<br><strong>Timestamp:</strong> ${phase.provenance.data_timestamp}<br><strong>Validation:</strong> ${phase.provenance.validation_status}</p><pre>${JSON.stringify(phase.outputs, null, 2)}</pre></article>`).join('') || '<p class="muted">Future roadmap unavailable.</p>';
+    })
     function loadShadowStatus() { fetch('/api/shadow/status').then(r => r.json()).then(status => { const keys = ['mode', 'zerodha_status', 'data_source', 'total_ticks_processed', 'candles_finalized', 'signals_generated', 'paper_orders', 'fills', 'open_positions', 'closed_positions', 'realized_pnl', 'unrealized_pnl', 'total_equity', 'shadow_days_completed', 'shadow_recommendation', 'go_live_allowed']; renderKv('shadow-status', status, keys); document.getElementById('shadow-raw').textContent = JSON.stringify(status, null, 2); }).catch(error => { document.getElementById('shadow-raw').textContent = `Shadow status unavailable: ${error}`; }) }
     function loadLiveReadiness() { setActionResult('Loading live readiness...', {status: 'LOADING'}); fetch('/api/live/readiness').then(r => r.json()).then(status => { const keys = ['mode', 'zerodha_credentials_visible', 'access_token_visible', 'expected_user_id_match', 'instruments_csv_exists', 'live_trading_env_enabled', 'manual_approval_required', 'kill_switch_status', 'go_live_allowed']; renderKv('live-readiness', status, keys); document.getElementById('connection-badge').textContent = status.block_reasons && status.block_reasons.length ? 'CONNECTION · BLOCKED' : 'CONNECTION · READY'; setSubmitEnabled(false); setActionResult(status.block_reasons && status.block_reasons.length ? 'Readiness BLOCKED' : 'Readiness checked', status); }).catch(error => setActionResult('Readiness ERROR', {error: String(error)})) }
     function livePayload() { return {symbol: document.getElementById('live-symbol').value, exchange: 'NSE', side: document.getElementById('live-side').value, quantity: Number(document.getElementById('live-qty').value), order_type: 'LIMIT', price: Number(document.getElementById('live-price').value), product: 'MIS'}; }
@@ -227,10 +254,10 @@ HTML = """<!doctype html>
     function selectMarketSymbol(symbol) { document.getElementById('market-symbol').value = symbol; document.getElementById('live-symbol').value = symbol; refreshMarketData(); loadChart(); loadLiveSignal(); loadAccuracyReport(); if (autoRefreshEnabled) startAutoRefresh(); }
     function refreshMarketData(isAuto=false) { const symbol = document.getElementById('market-symbol').value; if (isAuto) setPollingStatus('Refreshing quote...', 'info'); fetch(`/api/market/quote?symbol=${encodeURIComponent(symbol)}`).then(r => r.json()).then(payload => { document.getElementById('quote-symbol').textContent = payload.symbol || symbol; document.getElementById('quote-ltp').textContent = payload.ltp ?? '--'; document.getElementById('quote-change').textContent = payload.change_percent === 'DATA_UNAVAILABLE' ? 'Change unavailable' : `${payload.change_percent}%`; document.getElementById('quote-status').textContent = payload.validation_status || 'DATA_UNAVAILABLE'; renderKv('quote-kv', payload, ['open', 'high', 'low', 'close', 'volume', 'last_update', 'data_source', 'connection_status']); setMarketRaw(payload); stampRefresh(); setPollingStatus(autoRefreshEnabled ? 'LIVE POLLING ON' : 'PAUSED', autoRefreshEnabled ? 'info' : 'warn'); updateStaleWarning(payload); }).catch(error => { setMarketRaw({status:'ERROR', error:String(error)}); setPollingStatus('ERROR', 'danger'); }); }
     function updateStaleWarning(payload) { const target = document.getElementById('stale-warning'); const value = payload.last_update; if (!value || value === 'DATA_UNAVAILABLE') { target.textContent = 'Last update unavailable.'; target.className = 'stale'; return; } const parsed = new Date(value); if (Number.isNaN(parsed.getTime())) { target.textContent = `Last update: ${value}`; target.className = 'muted'; return; } const age = Math.abs(Date.now() - parsed.getTime()) / 1000; target.textContent = age > 10 ? `STALE DATA WARNING: last update ${Math.round(age)}s old` : `Fresh quote: ${Math.round(age)}s old`; target.className = age > 10 ? 'stale' : 'muted'; }
-    function loadChart(isAuto=false) { const symbol = document.getElementById('market-symbol').value; fetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}&interval=5minute`).then(r => r.json()).then(payload => { drawChart(payload.candles || []); document.getElementById('chart-status').textContent = payload.validation_status === 'VALIDATED' ? 'CHART READY' : 'Live data unavailable'; document.getElementById('chart-message').textContent = payload.validation_status === 'VALIDATED' ? `Showing Zerodha history for ${symbol}` : 'Live data unavailable. No fabricated chart data is rendered.'; if (!isAuto) setMarketRaw(payload); }).catch(error => { if (!isAuto) setMarketRaw({status:'ERROR', error:String(error)}); }); }
+    function loadChart(isAuto=false) { const symbol = document.getElementById('market-symbol').value; fetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}&interval=minute`).then(r => r.json()).then(payload => { drawChart(payload.candles || []); document.getElementById('chart-status').textContent = payload.validation_status === 'VALIDATED' ? 'CHART READY' : 'Live data unavailable'; document.getElementById('chart-message').textContent = payload.validation_status === 'VALIDATED' ? `Showing Zerodha 1-minute candles for ${symbol}` : 'Live data unavailable. No fabricated chart data is rendered.'; if (!isAuto) setMarketRaw(payload); }).catch(error => { if (!isAuto) setMarketRaw({status:'ERROR', error:String(error)}); }); }
     function loadLiveSignal(isAuto=false) { const symbol = document.getElementById('market-symbol').value; const autoRequested = document.getElementById('auto-trade-toggle').value === 'true'; fetch(`/api/signal/live?symbol=${encodeURIComponent(symbol)}&auto_trade=${autoRequested}`).then(r => r.json()).then(payload => { const decision = payload.decision || 'DATA_UNAVAILABLE'; const decisionEl = document.getElementById('signal-decision'); decisionEl.textContent = decision; decisionEl.className = 'signal-decision ' + (decision === 'BUY' ? 'decision-buy' : decision === 'SELL' ? 'decision-sell' : 'decision-wait'); document.getElementById('signal-status').textContent = payload.validation_status || 'DATA_UNAVAILABLE'; document.getElementById('signal-summary').textContent = (payload.signal_reasons || []).join(' · ') || 'No signal reasons available.'; document.getElementById('confidence-text').textContent = payload.confidence_score ?? 0; document.getElementById('confidence-meter').style.width = `${Math.max(0, Math.min(100, Number(payload.confidence_score || 0)))}%`; renderKv('signal-kv', payload, ['entry','stop_loss','target_1','target_2','risk_reward','timestamp','data_source']); renderKv('indicator-kv', payload.indicators || {}, ['ema_9','ema_21','vwap','rsi_14','atr_14','volume_confirmation','trend_direction']); renderKv('auto-trade-state', payload.auto_trade_state || {}, ['requested','state','eligible','reason']); document.getElementById('auto-trade-badge').textContent = `AUTO TRADE · ${(payload.auto_trade_state || {}).state || 'OFF'}`; if (!isAuto) document.getElementById('signal-raw').textContent = JSON.stringify(payload, null, 2); }).catch(error => { document.getElementById('signal-raw').textContent = JSON.stringify({status:'ERROR', error:String(error)}, null, 2); setPollingStatus('ERROR', 'danger'); }); }
     function loadAccuracyReport(isAuto=false) { const symbol = document.getElementById('market-symbol').value; fetch(`/api/signal/accuracy-report?symbol=${encodeURIComponent(symbol)}`).then(r => r.json()).then(payload => { if (!isAuto) document.getElementById('signal-raw').textContent = JSON.stringify({accuracy_report: payload}, null, 2); }).catch(() => {}); }
-    function drawChart(candles) { const canvas = document.getElementById('market-chart'); const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = '#071523'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = 'rgba(148,163,184,.22)'; for (let i=0;i<6;i++) { const y = 30 + i*48; ctx.beginPath(); ctx.moveTo(28,y); ctx.lineTo(canvas.width-28,y); ctx.stroke(); } if (!candles.length) { ctx.fillStyle = '#9eb5d1'; ctx.font = '26px system-ui'; ctx.fillText('Live data unavailable', 46, 148); ctx.font = '16px system-ui'; ctx.fillText('No fabricated chart data is rendered.', 46, 178); return; } const closes = candles.map(c => Number(c.close)).filter(Number.isFinite); const min = Math.min(...closes), max = Math.max(...closes), range = Math.max(max-min, 1); ctx.strokeStyle = '#67e8f9'; ctx.lineWidth = 3; ctx.beginPath(); closes.forEach((close, index) => { const x = 30 + index * ((canvas.width-60) / Math.max(closes.length-1, 1)); const y = canvas.height - 35 - ((close-min)/range) * (canvas.height-70); if (index === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }); ctx.stroke(); }
+    function drawChart(candles) { const canvas = document.getElementById('market-chart'); const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = '#071523'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = 'rgba(148,163,184,.22)'; for (let i=0;i<6;i++) { const y = 30 + i*48; ctx.beginPath(); ctx.moveTo(28,y); ctx.lineTo(canvas.width-28,y); ctx.stroke(); } if (!candles.length) { ctx.fillStyle = '#9eb5d1'; ctx.font = '26px system-ui'; ctx.fillText('Live candle data unavailable', 46, 148); ctx.font = '16px system-ui'; ctx.fillText('No fabricated chart data is rendered.', 46, 178); return; } const rows = candles.map(c => ({open:Number(c.open), high:Number(c.high), low:Number(c.low), close:Number(c.close)})).filter(c => [c.open,c.high,c.low,c.close].every(Number.isFinite)).slice(-80); if (!rows.length) { ctx.fillStyle = '#9eb5d1'; ctx.font = '22px system-ui'; ctx.fillText('No valid candle rows', 46, 148); return; } const max = Math.max(...rows.map(c => c.high)); const min = Math.min(...rows.map(c => c.low)); const range = Math.max(max-min, 1); const left=34, right=canvas.width-34, top=24, bottom=canvas.height-34; const step = (right-left)/Math.max(rows.length,1); const bodyWidth = Math.max(4, Math.min(12, step*.55)); const yFor = price => bottom - ((price-min)/range)*(bottom-top); rows.forEach((c,index) => { const x = left + index*step + step/2; const openY=yFor(c.open), closeY=yFor(c.close), highY=yFor(c.high), lowY=yFor(c.low); const up = c.close >= c.open; ctx.strokeStyle = up ? '#6ee7b7' : '#fb7185'; ctx.fillStyle = up ? 'rgba(110,231,183,.72)' : 'rgba(251,113,133,.72)'; ctx.beginPath(); ctx.moveTo(x, highY); ctx.lineTo(x, lowY); ctx.stroke(); const bodyTop = Math.min(openY, closeY); const bodyHeight = Math.max(2, Math.abs(closeY-openY)); ctx.fillRect(x-bodyWidth/2, bodyTop, bodyWidth, bodyHeight); }); ctx.fillStyle = '#9eb5d1'; ctx.font='13px system-ui'; ctx.fillText(`Candles: ${rows.length} · Last close: ${rows[rows.length-1].close}`, 42, canvas.height-10); }
     document.getElementById('market-symbol').addEventListener('change', () => selectMarketSymbol(document.getElementById('market-symbol').value));
     fetch('/api/market/watchlist').then(r => r.json()).then(renderWatchlist).catch(() => renderWatchlist({symbols: marketSymbols}));
     refreshMarketData(); loadChart(); loadShadowStatus(); loadLiveReadiness(); loadLiveSignal(); loadAccuracyReport(); startAutoRefresh();
