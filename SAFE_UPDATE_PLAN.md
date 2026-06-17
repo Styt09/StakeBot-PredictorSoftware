@@ -67,6 +67,19 @@ Phase 5 central risk engine foundation has been added:
 - Opt-in web_app patch script for `/api/risk/check`, dashboard card, and paper order pre-check.
 - Phase 5 tests.
 
+## Phase 6 status
+
+Phase 6 paper trading hardening foundation has been added:
+
+- PaperOrderManager and PaperExecutionState.
+- Order lifecycle statuses: CREATED, VALIDATED, RISK_APPROVED, BLOCKED, PAPER_FILLED, CANCELLED, FAILED.
+- Validated quote/LTP virtual fill behavior.
+- Virtual paper position tracking and P&L.
+- Brokerage/slippage placeholders.
+- Paper audit log.
+- Read-only paper orders/trades endpoint patch script.
+- Phase 6 tests.
+
 ## Phase order
 
 1. Safe config layer — **foundation added**
@@ -74,9 +87,7 @@ Phase 5 central risk engine foundation has been added:
 3. Market data safety — **foundation added**
 4. Signal safety wrapper — **foundation added**
 5. Risk engine — **foundation added**
-6. Paper trading hardening
-   - Preserve current paper trading.
-   - Add order lifecycle, slippage placeholder, and audit events.
+6. Paper trading hardening — **foundation added**
 7. Shadow trading
    - Add theoretical order tracking with no real broker action.
    - Add shadow report.
@@ -107,6 +118,5 @@ Phase 5 central risk engine foundation has been added:
 
 ## Current recommended verdict
 
-Current status: PAPER-FOUNDATION, still NO-GO for real-money trading.
-Near-term target: PAPER-READY after paper order lifecycle/audit hardening.
+Current status: PAPER-READY candidate, still NO-GO for real-money trading.
 Next target: SHADOW-READY after live-data shadow reports.
