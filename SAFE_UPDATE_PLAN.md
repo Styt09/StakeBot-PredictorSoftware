@@ -13,9 +13,23 @@ Primary rule: preserve the existing app. Do not delete existing UI, routes, APIs
 - Weak signal must show NO_TRADE.
 - Any real-money uncertainty must stay BLOCKED.
 
+## Phase 1 status
+
+Phase 1 safe configuration foundation has been added:
+
+- Safe config module.
+- Trading mode validation defaults.
+- Secret masking helpers.
+- Safe public config structure.
+- Updated `.env.example`.
+- `README_ENV_SETUP.md`.
+- Config tests.
+
+Remaining Phase 1 integration note: wire `/api/config/public` into `web_app.py` in the local Codespace after resolving/stashing local uncommitted `web_app.py` changes.
+
 ## Phase order
 
-1. Safe config layer
+1. Safe config layer — **foundation added**
    - Add canonical config module.
    - Update env documentation.
    - Add secret masking.
@@ -81,6 +95,6 @@ Primary rule: preserve the existing app. Do not delete existing UI, routes, APIs
 
 ## Current recommended verdict
 
-Current status: NO-GO for real-money trading.
+Current status: PAPER-FOUNDATION, still NO-GO for real-money trading.
 Near-term target: PAPER-READY.
 Next target: SHADOW-READY after live-data shadow reports.
