@@ -28,66 +28,46 @@ HTML = """<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ALPHA-GATE X Trading Terminal</title>
+  <title>ALPHA-GATE X SHADOW TRADING PLATFORM</title>
   <style>
-    :root { color-scheme: dark; --panel:rgba(12,25,44,.84); --panel-strong:rgba(17,34,59,.95); --line:rgba(148,163,184,.24); --text:#edf7ff; --muted:#9eb5d1; --accent:#67e8f9; --accent2:#6ee7b7; --warn:#fbbf24; --danger:#fb7185; --buy:#22c55e; --sell:#ef4444; --shadow:0 22px 70px rgba(0,0,0,.38); }
-    * { box-sizing:border-box; } body { margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; background:radial-gradient(circle at 20% 0%, rgba(103,232,249,.20), transparent 34%), radial-gradient(circle at 85% 8%, rgba(110,231,183,.16), transparent 30%), linear-gradient(135deg, #06101f 0%, #09162b 48%, #07111f 100%); color:var(--text); min-height:100vh; }
-    header { padding:34px min(5vw,70px) 22px; border-bottom:1px solid var(--line); } main { padding:24px min(5vw,70px) 56px; } h1 { margin:0; font-size:clamp(2rem, 5vw, 4.8rem); letter-spacing:.07em; line-height:1.02; } h2 { margin:.25rem 0 0; color:var(--accent2); font-weight:850; } h3 { margin:.25rem 0; } p { color:#d8e7f7; }
-    .topbar { position:sticky; top:0; z-index:5; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin:-24px min(-5vw,-70px) 22px; padding:10px min(5vw,70px); background:rgba(5,10,20,.74); backdrop-filter:blur(14px); border-bottom:1px solid var(--line); }
-    .badge { display:inline-flex; width:max-content; align-items:center; gap:6px; border-radius:999px; padding:6px 11px; background:#0e243f; color:var(--accent2); font-size:.73rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; } .badge.warn{color:var(--warn);background:rgba(251,191,36,.12)} .badge.danger{color:var(--danger);background:rgba(251,113,133,.13)} .badge.info{color:var(--accent);background:rgba(103,232,249,.11)} .badge.buy{color:#bbf7d0;background:rgba(34,197,94,.18)} .badge.sell{color:#fecaca;background:rgba(239,68,68,.18)}
-    .live-pulse { width:9px; height:9px; border-radius:50%; background:var(--accent2); box-shadow:0 0 0 0 rgba(110,231,183,.75); animation:pulse 1.2s infinite; display:inline-block; } @keyframes pulse { 70% { box-shadow:0 0 0 9px rgba(110,231,183,0); } 100% { box-shadow:0 0 0 0 rgba(110,231,183,0); } }
-    .principles,.grid,.watchlist,.terminal-grid,.paper-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(245px,1fr)); gap:16px; } .card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);backdrop-filter:blur(16px)} .card.strong{background:var(--panel-strong)} .shadow{margin-top:24px} .phase{display:flex;flex-direction:column;gap:10px}
-    .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.kv div{background:rgba(5,17,31,.72);border:1px solid var(--line);border-radius:14px;padding:11px;min-height:58px}.kv strong{color:#dbeafe;display:block;font-size:.78rem;opacity:.9}
-    .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:12px 0} button,input,select,summary{border-radius:13px;border:1px solid var(--line);padding:11px 12px;background:rgba(5,17,31,.82);color:var(--text);min-height:42px}button{cursor:pointer;font-weight:900}button:hover,summary:hover{border-color:rgba(103,232,249,.55)}button[disabled]{cursor:not-allowed;opacity:.45}button.danger{background:#3a1320;color:#fecdd3;border-color:#7f1d1d}
-    details.future-roadmap{margin-top:24px}details.future-roadmap summary{cursor:pointer;font-weight:950;list-style:none}details.future-roadmap summary::-webkit-details-marker{display:none}.unlock-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0 16px}.unlock-list div{background:rgba(5,17,31,.70);border:1px dashed rgba(251,191,36,.35);border-radius:14px;padding:12px}
-    .action-result{margin:12px 0;background:rgba(5,17,31,.72);border:1px solid var(--line);border-radius:14px;padding:13px}.action-result strong{color:var(--accent2)}.market-hero{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}.quote-value{font-size:clamp(1.8rem,7vw,4rem);font-weight:950;line-height:1}.signal-decision{font-size:clamp(2.3rem,10vw,6rem);font-weight:1000;line-height:.95;letter-spacing:.03em}.decision-buy{color:var(--buy)}.decision-sell{color:var(--sell)}.decision-wait{color:var(--warn)}.profit{color:var(--buy);font-weight:950}.loss{color:var(--sell);font-weight:950}
-    .meter{height:14px;background:#081827;border:1px solid var(--line);border-radius:999px;overflow:hidden}.meter>div{height:100%;background:linear-gradient(90deg,var(--danger),var(--warn),var(--accent2));width:0%;transition:width .25s ease}.chart-wrap{min-height:330px;display:flex;flex-direction:column;gap:10px}canvas{width:100%;height:280px;background:linear-gradient(180deg,rgba(6,24,44,.92),rgba(3,10,20,.92));border:1px solid var(--line);border-radius:18px}.watch-card{cursor:pointer;transition:transform .15s ease,border-color .15s ease}.watch-card:hover{transform:translateY(-2px);border-color:rgba(103,232,249,.45)}.muted{color:var(--muted)}pre{white-space:pre-wrap;overflow:auto;color:#d7e9ff;background:rgba(3,10,20,.86);padding:12px;border-radius:14px;max-height:360px}.stale{color:var(--warn);font-weight:900}.paper-row{border-bottom:1px solid var(--line);padding:10px 0}.paper-row:last-child{border-bottom:none}
-    @media (min-width:900px){.market-hero{grid-template-columns:.75fr 1.25fr}.terminal-grid{grid-template-columns:.85fr 1.15fr}.paper-grid{grid-template-columns:1fr 1fr}}
+    :root{color-scheme:dark;--panel:rgba(12,25,44,.86);--panel2:rgba(17,34,59,.96);--line:rgba(148,163,184,.24);--text:#edf7ff;--muted:#9eb5d1;--accent:#67e8f9;--accent2:#6ee7b7;--warn:#fbbf24;--danger:#fb7185;--buy:#22c55e;--sell:#ef4444;--shadow:0 22px 70px rgba(0,0,0,.38)}
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:radial-gradient(circle at 20% 0%,rgba(103,232,249,.20),transparent 34%),radial-gradient(circle at 85% 8%,rgba(110,231,183,.16),transparent 30%),linear-gradient(135deg,#06101f 0%,#09162b 48%,#07111f 100%);color:var(--text);min-height:100vh}header{padding:34px min(5vw,70px) 22px;border-bottom:1px solid var(--line)}main{padding:24px min(5vw,70px) 56px}h1{margin:0;font-size:clamp(2rem,5vw,4.8rem);letter-spacing:.06em;line-height:1.02}h2{margin:.25rem 0 0;color:var(--accent2);font-weight:850}h3{margin:.25rem 0}p{color:#d8e7f7}.topbar{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:-24px min(-5vw,-70px) 22px;padding:10px min(5vw,70px);background:rgba(5,10,20,.76);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.badge{display:inline-flex;width:max-content;align-items:center;gap:6px;border-radius:999px;padding:6px 11px;background:#0e243f;color:var(--accent2);font-size:.73rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.badge.warn{color:var(--warn);background:rgba(251,191,36,.12)}.badge.danger{color:var(--danger);background:rgba(251,113,133,.13)}.badge.info{color:var(--accent);background:rgba(103,232,249,.11)}.badge.buy{color:#bbf7d0;background:rgba(34,197,94,.18)}.badge.sell{color:#fecaca;background:rgba(239,68,68,.18)}.grid,.watchlist,.terminal-grid,.paper-grid,.principles{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:16px}.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);backdrop-filter:blur(16px)}.strong{background:var(--panel2)}.shadow{margin-top:24px}.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.kv div{background:rgba(5,17,31,.72);border:1px solid var(--line);border-radius:14px;padding:11px;min-height:58px}.kv strong{color:#dbeafe;display:block;font-size:.78rem;opacity:.9}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:12px 0}button,input,select,summary{border-radius:13px;border:1px solid var(--line);padding:11px 12px;background:rgba(5,17,31,.82);color:var(--text);min-height:42px}button{cursor:pointer;font-weight:900}button:hover,summary:hover{border-color:rgba(103,232,249,.55)}button[disabled]{cursor:not-allowed;opacity:.45}button.danger{background:#3a1320;color:#fecdd3;border-color:#7f1d1d}.quote-value{font-size:clamp(1.8rem,7vw,4rem);font-weight:950;line-height:1}.signal-decision{font-size:clamp(2.3rem,10vw,6rem);font-weight:1000;line-height:.95;letter-spacing:.03em}.decision-buy{color:var(--buy)}.decision-sell{color:var(--sell)}.decision-wait{color:var(--warn)}.profit{color:var(--buy);font-weight:950}.loss{color:var(--sell);font-weight:950}.meter{height:14px;background:#081827;border:1px solid var(--line);border-radius:999px;overflow:hidden}.meter>div{height:100%;background:linear-gradient(90deg,var(--danger),var(--warn),var(--accent2));width:0%;transition:width .25s ease}canvas{width:100%;height:280px;background:linear-gradient(180deg,rgba(6,24,44,.92),rgba(3,10,20,.92));border:1px solid var(--line);border-radius:18px}.muted{color:var(--muted)}pre{white-space:pre-wrap;overflow:auto;color:#d7e9ff;background:rgba(3,10,20,.86);padding:12px;border-radius:14px;max-height:360px}.paper-row{border-bottom:1px solid var(--line);padding:10px 0}.paper-row:last-child{border-bottom:none}details.future-roadmap{margin-top:24px}details.future-roadmap summary{cursor:pointer;font-weight:950;list-style:none}.unlock-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0 16px}.unlock-list div{background:rgba(5,17,31,.70);border:1px dashed rgba(251,191,36,.35);border-radius:14px;padding:12px}@media (min-width:900px){.terminal-grid{grid-template-columns:.85fr 1.15fr}.paper-grid{grid-template-columns:1fr 1fr}}
   </style>
 </head>
 <body>
-  <header><span class="badge info">ZERODHA LIVE DATA WHEN CONNECTED · LIVE TRADING FAIL-CLOSED</span><h1>ALPHA-GATE X TRADING TERMINAL</h1><h2>Live Market → Live Signal Engine → Paper Trading → Manual Review</h2><p>No fabricated accuracy, confidence, profitability, expected move, OI, PCR, IV, depth, flow, or alpha. Missing evidence returns <strong>DATA_UNAVAILABLE</strong>; weak evidence returns <strong>NO_TRADE</strong>.</p></header>
-  <main>
-    <section class="topbar"><span class="badge info" id="connection-badge"><span class="live-pulse"></span> CONNECTION · CHECKING</span><span class="badge info" id="polling-badge">LIVE POLLING ON</span><span class="badge warn" id="refresh-badge">Last refresh: never · Next: --s</span><span class="badge danger" id="auto-trade-badge">AUTO TRADE · OFF</span></section>
-    <section class="principles"><div class="card"><strong>Runtime Mode</strong><p>Paper/shadow validation first. Real live auto trading is disabled by default.</p></div><div class="card"><strong>Data Source</strong><p>Every quote, candle, signal, and paper trade includes data_source and timestamp.</p></div><div class="card"><strong>Validation Status</strong><p>BUY/SELL signals appear only when real candle evidence is validated.</p></div></section>
+<header><span class="badge info">ZERODHA LIVE DATA WHEN CONNECTED · LIVE TRADING FAIL-CLOSED</span><h1>ALPHA-GATE X SHADOW TRADING PLATFORM</h1><h2>Live Market → Live Signal Engine → Paper Trading → Manual Review</h2><p>No fabricated accuracy, confidence, profitability, expected move, OI, PCR, IV, depth, flow, or alpha. Missing evidence returns <strong>DATA_UNAVAILABLE</strong>; weak evidence returns <strong>NO_TRADE</strong>.</p></header>
+<main>
+<section class="topbar"><span class="badge info" id="connection-badge">CONNECTION · READY</span><span class="badge info" id="polling-badge">LIVE POLLING ON</span><span class="badge warn" id="refresh-badge">Last refresh: never · Next: --s</span><span class="badge danger" id="auto-trade-badge">AUTO TRADE · OFF</span></section>
+<section class="principles"><div class="card"><strong>Runtime Mode</strong><p>Paper/shadow validation first. Real live auto trading is disabled by default.</p></div><div class="card"><strong>Data Source</strong><p>Every quote, candle, signal, and paper trade includes data_source and timestamp.</p></div><div class="card"><strong>Validation Status</strong><p>BUY/SELL signals appear only when real candle evidence is validated.</p></div></section>
 
-    <section class="card strong shadow" id="live-terminal"><span class="badge info">LIVE MARKET WEB APP</span><h2>Live Market Dashboard</h2><p class="muted">This panel connects to Zerodha Kite read-only quote/history APIs when credentials and access token are valid.</p><div class="controls"><select id="market-symbol"><option>RELIANCE</option><option>INFY</option><option>TCS</option><option>NIFTY</option><option>BANKNIFTY</option></select><button onclick="refreshMarketData()">Refresh Market Data</button><button onclick="loadChart()">Load Chart</button><button onclick="loadLiveSignal()">Generate Live Signal</button></div><div class="controls"><select id="auto-refresh-toggle" onchange="setAutoRefresh(this.value === 'true')"><option value="true">Auto Refresh ON</option><option value="false">Auto Refresh OFF</option></select><span class="badge info" id="refresh-status">LIVE POLLING ON</span><span class="badge warn" id="last-refresh">Last refresh: never</span><span class="badge warn" id="next-refresh">Next refresh: --s</span></div><div class="market-hero"><div class="card"><span id="quote-status" class="badge warn">DATA_UNAVAILABLE</span><h3 id="quote-symbol">RELIANCE</h3><div id="quote-ltp" class="quote-value">--</div><div id="quote-change" class="muted">Change unavailable</div><div id="stale-warning" class="muted">Stale check waiting for first refresh.</div><div id="quote-kv" class="kv" style="margin-top:12px"></div></div><div class="card chart-wrap"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h3>Candlestick Chart</h3><span id="chart-status" class="badge warn">Live data unavailable</span></div><canvas id="market-chart" width="900" height="320"></canvas><div id="chart-message" class="muted">Load chart to check Zerodha history availability.</div></div></div><h3>Watchlist</h3><div id="watchlist" class="watchlist"></div><pre id="market-raw">Market payload will appear here.</pre></section>
+<section class="card strong shadow" id="live-terminal"><span class="badge info">LIVE MARKET WEB APP</span><h2>Live Market Dashboard</h2><div class="controls"><select id="market-symbol"><option>RELIANCE</option><option>INFY</option><option>TCS</option><option>NIFTY</option><option>BANKNIFTY</option></select><button onclick="refreshMarketData()">Refresh Market Data</button><button onclick="loadChart()">Load Chart</button><button onclick="loadLiveSignal()">Generate Live Signal</button></div><div class="controls"><select id="auto-refresh-toggle" onchange="setAutoRefresh(this.value==='true')"><option value="true">Auto Refresh ON</option><option value="false">Auto Refresh OFF</option></select><span class="badge info" id="refresh-status">LIVE POLLING ON</span><span class="badge warn" id="last-refresh">Last refresh: never</span><span class="badge warn" id="next-refresh">Next refresh: --s</span></div><div class="terminal-grid"><div class="card"><span id="quote-status" class="badge warn">DATA_UNAVAILABLE</span><h3 id="quote-symbol">RELIANCE</h3><div id="quote-ltp" class="quote-value">--</div><div id="quote-change" class="muted">Change unavailable</div><div id="quote-kv" class="kv" style="margin-top:12px"></div></div><div class="card"><h3>Candlestick Chart</h3><span id="chart-status" class="badge warn">Live data unavailable</span><canvas id="market-chart" width="900" height="320"></canvas><div id="chart-message" class="muted">No fabricated chart data is rendered.</div></div></div><h3>Watchlist</h3><div id="watchlist" class="watchlist"></div><pre id="market-raw">Market payload will appear here. /api/market/watchlist /api/market/quote /api/market/history</pre></section>
 
-    <section class="card strong shadow" id="signal-terminal"><span class="badge info">LIVE SIGNAL ENGINE</span><h2>Trading Terminal Signal</h2><div class="terminal-grid"><div class="card"><span id="signal-status" class="badge warn">NO SIGNAL</span><div id="signal-decision" class="signal-decision decision-wait">--</div><p id="signal-summary" class="muted">Tap Generate Live Signal.</p><div class="meter"><div id="confidence-meter"></div></div><p><strong>Confidence:</strong> <span id="confidence-text">0</span>%</p><div id="signal-kv" class="kv"></div></div><div class="card"><h3>Indicators & Reasons</h3><div id="indicator-kv" class="kv"></div><pre id="signal-raw">Signal payload will appear here.</pre></div></div><div class="card shadow"><span class="badge danger">REAL AUTO-TRADE TOGGLE · DEFAULT OFF</span><h3>Real Auto-Trade Control</h3><p class="muted">This toggle only shows real auto-trade gate state. It does not place real orders unless all strict broker, margin, risk, and confirmation gates pass.</p><div class="controls"><select id="auto-trade-toggle"><option value="false">REAL AUTO TRADE OFF</option><option value="true">REAL AUTO TRADE ON</option></select><button onclick="loadLiveSignal()">Recheck Real Auto-Trade Gate</button></div><div id="auto-trade-state" class="kv"></div></div></section>
+<section class="card strong shadow" id="signal-terminal"><span class="badge info">LIVE SIGNAL ENGINE</span><h2>Trading Terminal Signal</h2><div class="terminal-grid"><div class="card"><span id="signal-status" class="badge warn">NO SIGNAL</span><div id="signal-decision" class="signal-decision decision-wait">--</div><p id="signal-summary" class="muted">Tap Generate Live Signal.</p><div class="meter"><div id="confidence-meter"></div></div><p><strong>Confidence:</strong> <span id="confidence-text">0</span>%</p><div id="signal-kv" class="kv"></div></div><div class="card"><h3>Indicators & Reasons</h3><div id="indicator-kv" class="kv"></div><pre id="signal-raw">Signal payload will appear here. /api/signal/live</pre></div></div><div class="card shadow"><span class="badge danger">AUTO-TRADE TOGGLE · DEFAULT OFF</span><h3>Real Auto-Trade Control</h3><p class="muted">Real orders remain fail-closed.</p><div class="controls"><select id="auto-trade-toggle"><option value="false">REAL AUTO TRADE OFF</option><option value="true">REAL AUTO TRADE ON</option></select><button onclick="loadLiveSignal()">Recheck Real Auto-Trade Gate</button></div><div id="auto-trade-state" class="kv"></div></div></section>
 
-    <section class="card strong shadow" id="paper-terminal"><span class="badge buy">PAPER MODE · VIRTUAL MONEY ONLY</span><span class="badge danger">REAL ORDERS DISABLED</span><h2>Paper Trading Terminal</h2><p class="muted">Manual paper BUY/SELL, target/stop tracking, paper auto-trade, and statement ledger. This never calls real broker order placement APIs.</p><div id="paper-summary" class="kv"></div><div class="controls"><input id="paper-add-amount" type="number" value="10000" min="1" step="100" /><button onclick="addPaperBalance()">Add Virtual Balance</button><button class="danger" onclick="resetPaperAccount()">Reset Paper Account</button><select id="paper-auto-toggle"><option value="false">PAPER AUTO OFF</option><option value="true">PAPER AUTO ON</option></select><button onclick="togglePaperAutoTrade()">Set Paper Auto-Trade</button></div><div class="paper-grid"><div class="card"><h3>Manual Paper Order</h3><div class="controls"><input id="paper-symbol" value="RELIANCE" placeholder="Symbol" /><select id="paper-side"><option>BUY</option><option>SELL</option></select><input id="paper-qty" type="number" value="1" min="1" /><input id="paper-entry" type="number" value="0" min="0" step="0.05" /><input id="paper-sl" type="number" value="0" min="0" step="0.05" /><input id="paper-t1" type="number" value="0" min="0" step="0.05" /><input id="paper-t2" type="number" value="0" min="0" step="0.05" /><button onclick="submitPaperOrder()">Submit Paper Order</button></div><pre id="paper-order-result">Paper order result will appear here.</pre></div><div class="card"><h3>Open Positions</h3><div id="paper-open-positions" class="muted">No open paper positions.</div></div></div><div class="paper-grid"><div class="card"><h3>Closed Trades</h3><div id="paper-closed-trades" class="muted">No closed paper trades.</div></div><div class="card"><h3>Paper Statement</h3><div id="paper-ledger" class="muted">No ledger entries yet.</div><pre id="paper-raw">Paper status will appear here.</pre></div></div></section>
+<section class="card strong shadow" id="paper-terminal"><span class="badge buy">PAPER MODE · VIRTUAL MONEY ONLY</span><span class="badge danger">REAL ORDERS DISABLED</span><h2>Paper Trading Terminal</h2><p class="muted">Manual paper BUY/SELL, target/stop tracking, paper auto-trade, and statement ledger. This never calls real broker order placement APIs.</p><div id="paper-summary" class="kv"></div><div class="controls"><input id="paper-add-amount" type="number" value="10000" min="1" step="100" /><button onclick="addPaperBalance()">Add Virtual Balance</button><button class="danger" onclick="resetPaperAccount()">Reset Paper Account</button></div>
+  <div class="paper-grid"><div class="card"><h3>Manual Paper Order</h3><div class="controls"><input id="paper-symbol" value="RELIANCE" placeholder="Symbol" /><select id="paper-side"><option>BUY</option><option>SELL</option></select><input id="paper-qty" type="number" value="1" min="1" /><input id="paper-entry" type="number" value="0" min="0" step="0.05" placeholder="Entry" /><input id="paper-sl" type="number" value="0" min="0" step="0.05" placeholder="Stop loss" /><input id="paper-t1" type="number" value="0" min="0" step="0.05" placeholder="Target 1" /><input id="paper-t2" type="number" value="0" min="0" step="0.05" placeholder="Target 2" /><button onclick="submitPaperOrder()">Submit Paper Order</button></div><pre id="paper-order-result">Paper order result will appear here.</pre></div>
+  <div class="card"><h3>Paper Auto Settings</h3><p class="muted">Virtual paper auto-trade only. Real orders disabled.</p><div class="controls"><select id="setting-auto"><option value="false">OFF</option><option value="true">ON</option></select><select id="setting-sizing"><option>FIXED_QUANTITY</option><option>FIXED_AMOUNT</option></select><input id="setting-fixed-qty" type="number" value="1" min="1" /><input id="setting-fixed-amount" type="number" value="1000" min="1" /><select id="setting-target-mode"><option>PERCENT</option><option>POINTS</option></select><input id="setting-target-value" type="number" value="1" min="0" step="0.05" /><select id="setting-sl-mode"><option>PERCENT</option><option>POINTS</option></select><input id="setting-sl-value" type="number" value="0.5" min="0" step="0.05" /><input id="setting-max-open" type="number" value="1" min="1" /><input id="setting-max-trades" type="number" value="5" min="1" /><input id="setting-max-loss" type="number" value="1000" min="0" /><button onclick="savePaperSettings()">Save Settings</button></div><div id="paper-auto-preview" class="kv"></div><pre id="paper-settings-raw">/api/paper/settings</pre></div></div>
+  <div class="paper-grid"><div class="card"><h3>Open Positions</h3><div id="paper-open-positions" class="muted">No open paper positions.</div></div><div class="card"><h3>Closed Trades</h3><div id="paper-closed-trades" class="muted">No closed paper trades.</div></div></div><div class="card"><h3>Paper Statement</h3><div id="paper-ledger" class="muted">No ledger entries yet.</div><pre id="paper-raw">/api/paper/status /api/paper/statement /api/paper/order /api/paper/balance/add /api/paper/reset /api/paper/position/close /api/paper/auto-trade/toggle</pre></div></section>
 
-    <section class="card shadow" id="manual-order-terminal"><span class="badge danger">LIVE MONEY RISK · MANUAL APPROVAL ONLY</span><h2>Real Live Trading Control Panel</h2><p>Automatic live trading is disabled. Live order submit remains blocked unless credentials, instruments, env gates, approval, idempotency, and risk checks pass.</p><div class="controls"><button onclick="loadLiveReadiness()">Check Live Readiness</button><button onclick="previewLiveOrder()">Preview LIMIT Order</button><button id="submit-live-order" onclick="submitLiveOrder()" disabled>Submit Live Order</button><button class="danger" onclick="enableKillSwitch()">Enable Kill Switch</button><button onclick="resetKillSwitch()">Reset Kill Switch</button></div><div class="action-result"><strong>Last Action Result</strong><div id="last-action-line">No action yet. Tap a control button.</div></div><div class="controls"><input id="live-symbol" value="RELIANCE" placeholder="Symbol" /><select id="live-side"><option>BUY</option><option>SELL</option></select><input id="live-qty" value="1" type="number" min="1" /><input id="live-price" value="1" type="number" min="0" step="0.05" /></div><div id="live-readiness" class="kv"></div><pre id="live-raw">Live controls are fail-closed. Press Check Live Readiness.</pre></section>
+<section class="card shadow" id="manual-order-terminal"><span class="badge danger">LIVE MONEY RISK · MANUAL APPROVAL ONLY</span><h2>Real Live Trading Control Panel</h2><p>Real live order submit remains blocked unless every strict gate passes.</p><div class="controls"><button onclick="loadLiveReadiness()">Check Live Readiness</button><button onclick="previewLiveOrder()">Preview LIMIT Order</button><button id="submit-live-order" onclick="submitLiveOrder()" disabled>Submit Live Order</button><button class="danger" onclick="enableKillSwitch()">Enable Kill Switch</button><button onclick="resetKillSwitch()">Reset Kill Switch</button></div><div class="action-result"><strong>Last Action Result</strong><div id="last-action-line">No action yet.</div></div><div class="controls"><input id="live-symbol" value="RELIANCE" /><select id="live-side"><option>BUY</option><option>SELL</option></select><input id="live-qty" value="1" type="number" min="1" /><input id="live-price" value="1" type="number" min="0" step="0.05" /></div><div id="live-readiness" class="kv"></div><pre id="live-raw">/api/shadow/status /api/live/readiness /api/demo</pre></section>
 
-    <details class="card strong future-roadmap" id="future-modules"><summary>Future Institutional Modules · intentionally locked</summary><p class="muted"><strong>Future modules are intentionally locked until enough live evidence is collected. No fake validation.</strong></p><div class="unlock-list"><div><strong>Drift Detection</strong><br>Requires 30–60 days signal/outcome logs.</div><div><strong>Automated Retraining</strong><br>Requires validated drift + backtest gates.</div><div><strong>Machine Learning Foundation</strong><br>Requires labeled dataset and OOS validation.</div><div><strong>Ensembles</strong><br>Requires multiple validated ML models.</div><div><strong>Advanced AI</strong><br>Requires validated ML + governance gates.</div><div><strong>Financial LLM</strong><br>Requires verified financial/news data source.</div></div><div id="phases" class="grid"></div></details>
-    <section class="card shadow"><span class="badge warn">READ-ONLY · GO-LIVE DISABLED</span><h2>Real Shadow Runtime Status</h2><p>Live broker mutations remain disabled. Missing credentials, instruments, or WebSocket readiness are reported as unavailable instead of using fake data.</p><div id="shadow-status" class="kv"></div><pre id="shadow-raw">Loading shadow runtime status...</pre></section>
-  </main>
-  <script>
-    let latestPreviewId = null; let autoRefreshEnabled = true; let lastSuccessfulRefresh = null; let nextQuoteRefreshAt = Date.now(); const pollingTimers = {quote:null, signal:null, chart:null, accuracy:null, countdown:null, paper:null}; const marketSymbols = ['RELIANCE','INFY','TCS','NIFTY','BANKNIFTY'];
-    const renderKv = (target, status, keys) => { document.getElementById(target).innerHTML = keys.map(key => `<div><strong>${key}</strong>${status[key] ?? 'DATA_UNAVAILABLE'}</div>`).join(''); };
-    const postJson = (url, payload) => fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload || {})}).then(r => r.json()); const setActionResult = (label, payload) => { const stamp = new Date().toLocaleTimeString(); document.getElementById('last-action-line').textContent = `${stamp} · ${label}`; document.getElementById('live-raw').textContent = JSON.stringify(payload, null, 2); }; const setSubmitEnabled = enabled => { document.getElementById('submit-live-order').disabled = !enabled; }; const setMarketRaw = payload => { document.getElementById('market-raw').textContent = JSON.stringify(payload, null, 2); };
-    const stampRefresh = () => { lastSuccessfulRefresh = new Date(); document.getElementById('last-refresh').textContent = `Last refresh: ${lastSuccessfulRefresh.toLocaleTimeString()}`; document.getElementById('refresh-badge').textContent = `Last refresh: ${lastSuccessfulRefresh.toLocaleTimeString()} · Next: --s`; }; const setPollingStatus = (status, kind='info') => { document.getElementById('refresh-status').textContent = status; document.getElementById('polling-badge').textContent = status; document.getElementById('polling-badge').className = `badge ${kind}`; }; const clearPollingTimers = () => { Object.keys(pollingTimers).forEach(k => { if (pollingTimers[k]) { clearInterval(pollingTimers[k]); pollingTimers[k] = null; } }); }; const quoteIntervalMs = () => document.hidden ? 3000 : 1000;
-    function updateCountdown(){ const remaining=Math.max(0,Math.ceil((nextQuoteRefreshAt-Date.now())/1000)); document.getElementById('next-refresh').textContent=`Next refresh: ${remaining}s`; if(lastSuccessfulRefresh) document.getElementById('refresh-badge').textContent=`Last refresh: ${lastSuccessfulRefresh.toLocaleTimeString()} · Next: ${remaining}s`; }
-    function setAutoRefresh(enabled){ autoRefreshEnabled=enabled; document.getElementById('auto-refresh-toggle').value=String(enabled); if(enabled) startAutoRefresh(); else { clearPollingTimers(); setPollingStatus('PAUSED','warn'); document.getElementById('next-refresh').textContent='Next refresh: paused'; } }
-    function startAutoRefresh(){ clearPollingTimers(); setPollingStatus('LIVE POLLING ON','info'); const runQuote=()=>{ if(!autoRefreshEnabled)return; nextQuoteRefreshAt=Date.now()+quoteIntervalMs(); refreshMarketData(true); }; const runSignal=()=>autoRefreshEnabled&&loadLiveSignal(true); const runChart=()=>autoRefreshEnabled&&loadChart(true); const runAccuracy=()=>autoRefreshEnabled&&loadAccuracyReport(true); const runPaper=()=>autoRefreshEnabled&&loadPaperStatus(true); runQuote(); runSignal(); runChart(); runAccuracy(); runPaper(); pollingTimers.quote=setInterval(runQuote,quoteIntervalMs()); pollingTimers.signal=setInterval(runSignal,5000); pollingTimers.chart=setInterval(runChart,15000); pollingTimers.accuracy=setInterval(runAccuracy,30000); pollingTimers.paper=setInterval(runPaper,3000); pollingTimers.countdown=setInterval(updateCountdown,1000); }
-    document.addEventListener('visibilitychange',()=>{ if(autoRefreshEnabled) startAutoRefresh(); });
-    const futureUnlock={'Drift Detection':'Requires 30–60 days signal/outcome logs.','Automated Retraining':'Requires validated drift + backtest gates.','Machine Learning Foundation':'Requires labeled dataset and OOS validation.','Ensembles':'Requires multiple validated ML models.','Advanced AI':'Requires validated ML + governance gates.','Financial LLM':'Requires verified financial/news data source.'}; fetch('/api/demo').then(r=>r.json()).then(data=>{const future=data.phases.filter(p=>p.phase>=18||futureUnlock[p.name]); document.getElementById('phases').innerHTML=future.map(p=>`<article class="card phase"><span class="badge ${p.status==='BLOCKED'?'warn':'info'}">PHASE ${p.phase} · ${p.status}</span><h3>${p.name}</h3><p><strong>Unlock criteria:</strong> ${futureUnlock[p.name]||'Requires validated live evidence and governance gates.'}</p><p><strong>Source:</strong> ${p.provenance.data_source}<br><strong>Timestamp:</strong> ${p.provenance.data_timestamp}<br><strong>Validation:</strong> ${p.provenance.validation_status}</p><pre>${JSON.stringify(p.outputs,null,2)}</pre></article>`).join('')||'<p class="muted">Future roadmap unavailable.</p>';});
-    function loadShadowStatus(){fetch('/api/shadow/status').then(r=>r.json()).then(s=>{renderKv('shadow-status',s,['mode','zerodha_status','data_source','signals_generated','paper_orders','fills','realized_pnl','unrealized_pnl','total_equity','shadow_days_completed','go_live_allowed']);document.getElementById('shadow-raw').textContent=JSON.stringify(s,null,2);}).catch(e=>{document.getElementById('shadow-raw').textContent=`Shadow status unavailable: ${e}`;});}
-    function loadLiveReadiness(){setActionResult('Loading live readiness...', {status:'LOADING'}); fetch('/api/live/readiness').then(r=>r.json()).then(s=>{renderKv('live-readiness',s,['mode','zerodha_credentials_visible','access_token_visible','expected_user_id_match','instruments_csv_exists','live_trading_env_enabled','manual_approval_required','kill_switch_status','go_live_allowed']); document.getElementById('connection-badge').textContent=s.block_reasons&&s.block_reasons.length?'CONNECTION · BLOCKED':'CONNECTION · READY'; setSubmitEnabled(false); setActionResult(s.block_reasons&&s.block_reasons.length?'Readiness BLOCKED':'Readiness checked',s);});}
-    function livePayload(){return {symbol:document.getElementById('live-symbol').value,exchange:'NSE',side:document.getElementById('live-side').value,quantity:Number(document.getElementById('live-qty').value),order_type:'LIMIT',price:Number(document.getElementById('live-price').value),product:'MIS'};} function previewLiveOrder(){latestPreviewId=null;setSubmitEnabled(false);setActionResult('Loading order preview...', {status:'LOADING'});postJson('/api/live/order/preview',livePayload()).then(s=>{latestPreviewId=s.preview_id||null;setSubmitEnabled(Boolean(s.can_submit_live_order));setActionResult(s.safety_gate_result==='PASS'?'Preview PASS':'Preview BLOCKED',s);});} function submitLiveOrder(){if(!latestPreviewId){setActionResult('Submit BLOCKED: preview required before submit',{status:'BLOCKED'});return;} const p={...livePayload(),preview_id:latestPreviewId,typed_confirmation:'CONFIRM_LIVE_ORDER',approval_mode:true};postJson('/api/live/order/submit',p).then(s=>{setSubmitEnabled(false);setActionResult(s.status==='BLOCKED'?'Submit BLOCKED':'Submit result',s);});} function enableKillSwitch(){postJson('/api/live/kill-switch',{}).then(s=>{setSubmitEnabled(false);setActionResult('Kill switch ENABLED',s);loadLiveReadiness();});} function resetKillSwitch(){postJson('/api/live/kill-switch/reset',{}).then(s=>{setSubmitEnabled(false);setActionResult('Kill switch RESET',s);loadLiveReadiness();});}
-    function renderWatchlist(payload){const rows=payload.symbols||marketSymbols;document.getElementById('watchlist').innerHTML=rows.map(symbol=>`<div class="card watch-card" onclick="selectMarketSymbol('${symbol}')"><span class="badge info">${payload.connection_status==='ZERODHA_READY_FOR_QUOTE'?'LIVE READY':'CHECK QUOTE'}</span><h3>${symbol}</h3><p class="muted">Tap to load quote + signal.</p></div>`).join('');} function selectMarketSymbol(symbol){document.getElementById('market-symbol').value=symbol;document.getElementById('live-symbol').value=symbol;document.getElementById('paper-symbol').value=symbol;refreshMarketData();loadChart();loadLiveSignal();loadAccuracyReport();loadPaperStatus();if(autoRefreshEnabled)startAutoRefresh();}
-    function refreshMarketData(isAuto=false){const symbol=document.getElementById('market-symbol').value;if(isAuto)setPollingStatus('Refreshing quote...','info');fetch(`/api/market/quote?symbol=${encodeURIComponent(symbol)}`).then(r=>r.json()).then(p=>{document.getElementById('quote-symbol').textContent=p.symbol||symbol;document.getElementById('quote-ltp').textContent=p.ltp??'--';document.getElementById('quote-change').textContent=p.change_percent==='DATA_UNAVAILABLE'?'Change unavailable':`${p.change_percent}%`;document.getElementById('quote-status').textContent=p.validation_status||'DATA_UNAVAILABLE';renderKv('quote-kv',p,['open','high','low','close','volume','last_update','data_source','connection_status']);setMarketRaw(p);stampRefresh();setPollingStatus(autoRefreshEnabled?'LIVE POLLING ON':'PAUSED',autoRefreshEnabled?'info':'warn');updateStaleWarning(p);loadPaperStatus(true);}).catch(e=>{setMarketRaw({status:'ERROR',error:String(e)});setPollingStatus('ERROR','danger');});}
-    function updateStaleWarning(p){const t=document.getElementById('stale-warning');const v=p.last_update;if(!v||v==='DATA_UNAVAILABLE'){t.textContent='Last update unavailable.';t.className='stale';return;}const parsed=new Date(v);if(Number.isNaN(parsed.getTime())){t.textContent=`Last update: ${v}`;t.className='muted';return;}const age=Math.abs(Date.now()-parsed.getTime())/1000;t.textContent=age>10?`STALE DATA WARNING: last update ${Math.round(age)}s old`:`Fresh quote: ${Math.round(age)}s old`;t.className=age>10?'stale':'muted';}
-    function loadChart(isAuto=false){const symbol=document.getElementById('market-symbol').value;fetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}&interval=minute`).then(r=>r.json()).then(p=>{drawChart(p.candles||[]);document.getElementById('chart-status').textContent=p.validation_status==='VALIDATED'?'CHART READY':'Live data unavailable';document.getElementById('chart-message').textContent=p.validation_status==='VALIDATED'?`Showing Zerodha 1-minute candles for ${symbol}`:'Live data unavailable. No fabricated chart data is rendered.';if(!isAuto)setMarketRaw(p);});}
-    function loadLiveSignal(isAuto=false){const symbol=document.getElementById('market-symbol').value;const autoRequested=document.getElementById('auto-trade-toggle').value==='true';fetch(`/api/signal/live?symbol=${encodeURIComponent(symbol)}&auto_trade=${autoRequested}`).then(r=>r.json()).then(p=>{const d=p.decision||'DATA_UNAVAILABLE';const el=document.getElementById('signal-decision');el.textContent=d;el.className='signal-decision '+(d==='BUY'?'decision-buy':d==='SELL'?'decision-sell':'decision-wait');document.getElementById('signal-status').textContent=p.validation_status||'DATA_UNAVAILABLE';document.getElementById('signal-summary').textContent=(p.signal_reasons||[]).join(' · ')||'No signal reasons available.';document.getElementById('confidence-text').textContent=p.confidence_score??0;document.getElementById('confidence-meter').style.width=`${Math.max(0,Math.min(100,Number(p.confidence_score||0)))}%`;renderKv('signal-kv',p,['entry','stop_loss','target_1','target_2','risk_reward','timestamp','data_source']);renderKv('indicator-kv',p.indicators||{},['ema_9','ema_21','vwap','rsi_14','atr_14','volume_confirmation','trend_direction']);renderKv('auto-trade-state',p.auto_trade_state||{},['requested','state','eligible','reason']);document.getElementById('auto-trade-badge').textContent=`AUTO TRADE · ${(p.auto_trade_state||{}).state||'OFF'}`;if(!isAuto)document.getElementById('signal-raw').textContent=JSON.stringify(p,null,2);loadPaperStatus(true);});}
-    function loadAccuracyReport(isAuto=false){const symbol=document.getElementById('market-symbol').value;fetch(`/api/signal/accuracy-report?symbol=${encodeURIComponent(symbol)}`).then(r=>r.json()).then(p=>{if(!isAuto)document.getElementById('signal-raw').textContent=JSON.stringify({accuracy_report:p},null,2);}).catch(()=>{});}
-    function drawChart(candles){const canvas=document.getElementById('market-chart');const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#071523';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.strokeStyle='rgba(148,163,184,.22)';for(let i=0;i<6;i++){const y=30+i*48;ctx.beginPath();ctx.moveTo(28,y);ctx.lineTo(canvas.width-28,y);ctx.stroke();}if(!candles.length){ctx.fillStyle='#9eb5d1';ctx.font='26px system-ui';ctx.fillText('Live candle data unavailable',46,148);ctx.font='16px system-ui';ctx.fillText('No fabricated chart data is rendered.',46,178);return;}const rows=candles.map(c=>({open:Number(c.open),high:Number(c.high),low:Number(c.low),close:Number(c.close)})).filter(c=>[c.open,c.high,c.low,c.close].every(Number.isFinite)).slice(-80);if(!rows.length){ctx.fillStyle='#9eb5d1';ctx.font='22px system-ui';ctx.fillText('No valid candle rows',46,148);return;}const max=Math.max(...rows.map(c=>c.high));const min=Math.min(...rows.map(c=>c.low));const range=Math.max(max-min,1);const left=34,right=canvas.width-34,top=24,bottom=canvas.height-34;const step=(right-left)/Math.max(rows.length,1);const bodyWidth=Math.max(4,Math.min(12,step*.55));const yFor=price=>bottom-((price-min)/range)*(bottom-top);rows.forEach((c,index)=>{const x=left+index*step+step/2;const openY=yFor(c.open),closeY=yFor(c.close),highY=yFor(c.high),lowY=yFor(c.low);const up=c.close>=c.open;ctx.strokeStyle=up?'#6ee7b7':'#fb7185';ctx.fillStyle=up?'rgba(110,231,183,.72)':'rgba(251,113,133,.72)';ctx.beginPath();ctx.moveTo(x,highY);ctx.lineTo(x,lowY);ctx.stroke();const bodyTop=Math.min(openY,closeY);const bodyHeight=Math.max(2,Math.abs(closeY-openY));ctx.fillRect(x-bodyWidth/2,bodyTop,bodyWidth,bodyHeight);});ctx.fillStyle='#9eb5d1';ctx.font='13px system-ui';ctx.fillText(`Candles: ${rows.length} · Last close: ${rows[rows.length-1].close}`,42,canvas.height-10);}
-    function paperPayload(){return {symbol:document.getElementById('paper-symbol').value,side:document.getElementById('paper-side').value,quantity:Number(document.getElementById('paper-qty').value),entry_price:Number(document.getElementById('paper-entry').value),stop_loss:Number(document.getElementById('paper-sl').value),target_1:Number(document.getElementById('paper-t1').value),target_2:Number(document.getElementById('paper-t2').value)};} function submitPaperOrder(){postJson('/api/paper/order',paperPayload()).then(p=>{document.getElementById('paper-order-result').textContent=JSON.stringify(p,null,2);loadPaperStatus();});} function addPaperBalance(){postJson('/api/paper/balance/add',{amount:Number(document.getElementById('paper-add-amount').value)}).then(p=>{document.getElementById('paper-order-result').textContent=JSON.stringify(p,null,2);loadPaperStatus();});} function resetPaperAccount(){postJson('/api/paper/reset',{}).then(p=>{document.getElementById('paper-order-result').textContent=JSON.stringify(p,null,2);loadPaperStatus();});} function togglePaperAutoTrade(){postJson('/api/paper/auto-trade/toggle',{enabled:document.getElementById('paper-auto-toggle').value==='true'}).then(p=>{document.getElementById('paper-order-result').textContent=JSON.stringify(p,null,2);loadPaperStatus();});} function closePaperPosition(id){postJson('/api/paper/position/close',{position_id:id}).then(p=>{document.getElementById('paper-order-result').textContent=JSON.stringify(p,null,2);loadPaperStatus();});}
-    function loadPaperStatus(isAuto=false){fetch('/api/paper/status').then(r=>r.json()).then(p=>{renderKv('paper-summary',p.account_summary,['mode','cash_balance','equity','realized_pnl','unrealized_pnl','win_count','loss_count','win_rate','paper_auto_trade_state','go_live_allowed']);document.getElementById('paper-open-positions').innerHTML=(p.open_positions||[]).map(pos=>`<div class="paper-row"><strong>${pos.symbol} ${pos.side} x${pos.quantity}</strong><br>Entry ${pos.entry_price} · LTP ${pos.last_price ?? 'DATA_UNAVAILABLE'} · P&L <span class="${Number(pos.unrealized_pnl||0)>=0?'profit':'loss'}">${pos.unrealized_pnl}</span><br>SL ${pos.stop_loss} · T1 ${pos.target_1} · T2 ${pos.target_2}<br><button onclick="closePaperPosition('${pos.position_id}')">Manual Exit</button></div>`).join('')||'No open paper positions.';document.getElementById('paper-closed-trades').innerHTML=(p.closed_trades||[]).slice(-10).reverse().map(t=>`<div class="paper-row"><strong>${t.symbol} ${t.exit_reason}</strong><br>Entry ${t.entry_price} → Exit ${t.exit_price} · P&L <span class="${Number(t.pnl||0)>=0?'profit':'loss'}">${t.pnl}</span></div>`).join('')||'No closed paper trades.';document.getElementById('paper-ledger').innerHTML=(p.statement_ledger||[]).slice(-10).reverse().map(e=>`<div class="paper-row"><strong>${e.event}</strong><br>${e.timestamp}<br>${e.message}</div>`).join('')||'No ledger entries yet.';if(!isAuto)document.getElementById('paper-raw').textContent=JSON.stringify(p,null,2);});}
-    document.getElementById('market-symbol').addEventListener('change',()=>selectMarketSymbol(document.getElementById('market-symbol').value)); fetch('/api/market/watchlist').then(r=>r.json()).then(renderWatchlist).catch(()=>renderWatchlist({symbols:marketSymbols})); refreshMarketData(); loadChart(); loadShadowStatus(); loadLiveReadiness(); loadLiveSignal(); loadAccuracyReport(); loadPaperStatus(); startAutoRefresh();
-  </script>
-</body>
-</html>
+<details class="card strong future-roadmap" id="future-modules"><summary>Future Institutional Modules · intentionally locked</summary><p class="muted"><strong>Future modules are intentionally locked until enough live evidence is collected. No fake validation.</strong></p><div class="unlock-list"><div><strong>Drift Detection</strong><br>Requires 30–60 days signal/outcome logs.</div><div><strong>Automated Retraining</strong><br>Requires validated drift + backtest gates.</div><div><strong>Machine Learning Foundation</strong><br>Requires labeled dataset and OOS validation.</div><div><strong>Ensembles</strong><br>Requires multiple validated ML models.</div><div><strong>Advanced AI</strong><br>Requires validated ML + governance gates.</div><div><strong>Financial LLM</strong><br>Requires verified financial/news data source.</div></div><div id="phases" class="grid"></div></details>
+<section class="card shadow"><span class="badge warn">READ-ONLY · GO-LIVE DISABLED</span><h2>Real Shadow Runtime Status</h2><div id="shadow-status" class="kv"></div><pre id="shadow-raw">Loading shadow runtime status...</pre></section>
+</main>
+<script>
+let latestPreviewId=null;let autoRefreshEnabled=true;let lastSuccessfulRefresh=null;let nextQuoteRefreshAt=Date.now();const pollingTimers={quote:null,signal:null,chart:null,accuracy:null,countdown:null,paper:null,settings:null};const marketSymbols=['RELIANCE','INFY','TCS','NIFTY','BANKNIFTY'];const renderKv=(target,status,keys)=>{document.getElementById(target).innerHTML=keys.map(k=>`<div><strong>${k}</strong>${status[k]??'DATA_UNAVAILABLE'}</div>`).join('')};const postJson=(url,payload)=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})}).then(r=>r.json());const stampRefresh=()=>{lastSuccessfulRefresh=new Date();document.getElementById('last-refresh').textContent=`Last refresh: ${lastSuccessfulRefresh.toLocaleTimeString()}`;document.getElementById('refresh-badge').textContent=`Last refresh: ${lastSuccessfulRefresh.toLocaleTimeString()} · Next: --s`};const setPollingStatus=(s,k='info')=>{document.getElementById('refresh-status').textContent=s;document.getElementById('polling-badge').textContent=s;document.getElementById('polling-badge').className=`badge ${k}`};const clearPollingTimers=()=>{Object.keys(pollingTimers).forEach(k=>{if(pollingTimers[k]){clearInterval(pollingTimers[k]);pollingTimers[k]=null}})};const quoteIntervalMs=()=>document.hidden?3000:1000;function updateCountdown(){const r=Math.max(0,Math.ceil((nextQuoteRefreshAt-Date.now())/1000));document.getElementById('next-refresh').textContent=`Next refresh: ${r}s`;if(lastSuccessfulRefresh)document.getElementById('refresh-badge').textContent=`Last refresh: ${lastSuccessfulRefresh.toLocaleTimeString()} · Next: ${r}s`}function setAutoRefresh(e){autoRefreshEnabled=e;if(e)startAutoRefresh();else{clearPollingTimers();setPollingStatus('PAUSED','warn')}}function startAutoRefresh(){clearPollingTimers();setPollingStatus('LIVE POLLING ON','info');const q=()=>{if(!autoRefreshEnabled)return;nextQuoteRefreshAt=Date.now()+quoteIntervalMs();refreshMarketData(true)};const s=()=>autoRefreshEnabled&&loadLiveSignal(true);const c=()=>autoRefreshEnabled&&loadChart(true);const p=()=>autoRefreshEnabled&&loadPaperStatus(true);q();s();c();p();loadPaperSettings();pollingTimers.quote=setInterval(q,quoteIntervalMs());pollingTimers.signal=setInterval(s,5000);pollingTimers.chart=setInterval(c,15000);pollingTimers.paper=setInterval(p,3000);pollingTimers.countdown=setInterval(updateCountdown,1000)}document.addEventListener('visibilitychange',()=>{if(autoRefreshEnabled)startAutoRefresh()});
+function refreshMarketData(isAuto=false){const symbol=document.getElementById('market-symbol').value;fetch(`/api/market/quote?symbol=${encodeURIComponent(symbol)}`).then(r=>r.json()).then(p=>{document.getElementById('quote-symbol').textContent=p.symbol||symbol;document.getElementById('quote-ltp').textContent=p.ltp??'--';document.getElementById('quote-change').textContent=p.change_percent==='DATA_UNAVAILABLE'?'Change unavailable':`${p.change_percent}%`;document.getElementById('quote-status').textContent=p.validation_status||'DATA_UNAVAILABLE';renderKv('quote-kv',p,['open','high','low','close','volume','last_update','data_source','connection_status']);document.getElementById('market-raw').textContent=JSON.stringify(p,null,2);stampRefresh();setPollingStatus('LIVE POLLING ON','info');loadPaperStatus(true)})}
+function loadChart(isAuto=false){const symbol=document.getElementById('market-symbol').value;fetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}&interval=minute`).then(r=>r.json()).then(p=>{drawChart(p.candles||[]);document.getElementById('chart-status').textContent=p.validation_status==='VALIDATED'?'CHART READY':'Live data unavailable';document.getElementById('chart-message').textContent=p.validation_status==='VALIDATED'?`Showing Zerodha 1-minute candles for ${symbol}`:'Live data unavailable. No fabricated chart data is rendered.'})}
+function drawChart(candles){const canvas=document.getElementById('market-chart');const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#071523';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.strokeStyle='rgba(148,163,184,.22)';for(let i=0;i<6;i++){const y=30+i*48;ctx.beginPath();ctx.moveTo(28,y);ctx.lineTo(canvas.width-28,y);ctx.stroke()}if(!candles.length){ctx.fillStyle='#9eb5d1';ctx.font='26px system-ui';ctx.fillText('Live candle data unavailable',46,148);ctx.font='16px system-ui';ctx.fillText('No fabricated chart data is rendered.',46,178);return}const rows=candles.map(c=>({open:Number(c.open),high:Number(c.high),low:Number(c.low),close:Number(c.close)})).filter(c=>[c.open,c.high,c.low,c.close].every(Number.isFinite)).slice(-80);const max=Math.max(...rows.map(c=>c.high));const min=Math.min(...rows.map(c=>c.low));const range=Math.max(max-min,1);const left=34,right=canvas.width-34,top=24,bottom=canvas.height-34;const step=(right-left)/Math.max(rows.length,1);const yFor=price=>bottom-((price-min)/range)*(bottom-top);rows.forEach((c,i)=>{const x=left+i*step+step/2;const o=yFor(c.open),cl=yFor(c.close),h=yFor(c.high),l=yFor(c.low);ctx.strokeStyle=c.close>=c.open?'#6ee7b7':'#fb7185';ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();ctx.moveTo(x,h);ctx.lineTo(x,l);ctx.stroke();ctx.fillRect(x-3,Math.min(o,cl),6,Math.max(2,Math.abs(cl-o)))})}
+function loadLiveSignal(isAuto=false){const symbol=document.getElementById('market-symbol').value;fetch(`/api/signal/live?symbol=${encodeURIComponent(symbol)}`).then(r=>r.json()).then(p=>{const d=p.decision||'DATA_UNAVAILABLE';const el=document.getElementById('signal-decision');el.textContent=d;el.className='signal-decision '+(d==='BUY'?'decision-buy':d==='SELL'?'decision-sell':'decision-wait');document.getElementById('signal-status').textContent=p.validation_status||'DATA_UNAVAILABLE';document.getElementById('signal-summary').textContent=(p.signal_reasons||[]).join(' · ')||'No signal reasons available.';document.getElementById('confidence-text').textContent=p.confidence_score??0;document.getElementById('confidence-meter').style.width=`${Math.max(0,Math.min(100,Number(p.confidence_score||0)))}%`;renderKv('signal-kv',p,['entry','stop_loss','target_1','target_2','risk_reward','timestamp','data_source']);renderKv('indicator-kv',p.indicators||{},['ema_9','ema_21','vwap','rsi_14','atr_14','volume_confirmation','trend_direction']);renderKv('auto-trade-state',p.auto_trade_state||{},['requested','state','eligible','reason']);document.getElementById('signal-raw').textContent=JSON.stringify(p,null,2);loadPaperStatus(true)})}
+function loadAccuracyReport(isAuto=false){return fetch(`/api/signal/accuracy-report?symbol=${encodeURIComponent(document.getElementById('market-symbol').value)}`)}function livePayload(){return{symbol:document.getElementById('live-symbol').value,exchange:'NSE',side:document.getElementById('live-side').value,quantity:Number(document.getElementById('live-qty').value),order_type:'LIMIT',price:Number(document.getElementById('live-price').value),product:'MIS'}}function setActionResult(label,p){document.getElementById('last-action-line').textContent=`${new Date().toLocaleTimeString()} · ${label}`;document.getElementById('live-raw').textContent=JSON.stringify(p,null,2)}function loadLiveReadiness(){fetch('/api/live/readiness').then(r=>r.json()).then(p=>{renderKv('live-readiness',p,['mode','zerodha_credentials_visible','access_token_visible','expected_user_id_match','instruments_csv_exists','live_trading_env_enabled','manual_approval_required','kill_switch_status','go_live_allowed']);setActionResult('Readiness checked',p)})}function previewLiveOrder(){postJson('/api/live/order/preview',livePayload()).then(p=>{latestPreviewId=p.preview_id;document.getElementById('submit-live-order').disabled=!p.can_submit_live_order;setActionResult('Preview '+p.safety_gate_result,p)})}function submitLiveOrder(){postJson('/api/live/order/submit',{...livePayload(),preview_id:latestPreviewId,typed_confirmation:'CONFIRM_LIVE_ORDER',approval_mode:true}).then(p=>{document.getElementById('submit-live-order').disabled=true;setActionResult('Submit '+p.status,p)})}function enableKillSwitch(){postJson('/api/live/kill-switch',{}).then(p=>setActionResult('Kill switch enabled',p))}function resetKillSwitch(){postJson('/api/live/kill-switch/reset',{}).then(p=>setActionResult('Kill switch reset',p))}
+function renderWatchlist(p){document.getElementById('watchlist').innerHTML=(p.symbols||marketSymbols).map(symbol=>`<div class="card" onclick="selectMarketSymbol('${symbol}')"><span class="badge info">LIVE READY</span><h3>${symbol}</h3><p class="muted">Tap to load quote + signal.</p></div>`).join('')}function selectMarketSymbol(symbol){document.getElementById('market-symbol').value=symbol;document.getElementById('live-symbol').value=symbol;document.getElementById('paper-symbol').value=symbol;refreshMarketData();loadChart();loadLiveSignal();loadPaperStatus()}
+function paperPayload(){return{symbol:document.getElementById('paper-symbol').value,side:document.getElementById('paper-side').value,quantity:Number(document.getElementById('paper-qty').value),entry_price:Number(document.getElementById('paper-entry').value),stop_loss:Number(document.getElementById('paper-sl').value),target_1:Number(document.getElementById('paper-t1').value),target_2:Number(document.getElementById('paper-t2').value)}}function submitPaperOrder(){postJson('/api/paper/order',paperPayload()).then(p=>{document.getElementById('paper-order-result').textContent=JSON.stringify(p,null,2);loadPaperStatus()})}function addPaperBalance(){postJson('/api/paper/balance/add',{amount:Number(document.getElementById('paper-add-amount').value)}).then(p=>{document.getElementById('paper-order-result').textContent=JSON.stringify(p,null,2);loadPaperStatus()})}function resetPaperAccount(){postJson('/api/paper/reset',{}).then(p=>{document.getElementById('paper-order-result').textContent=JSON.stringify(p,null,2);loadPaperStatus()})}function closePaperPosition(id){postJson('/api/paper/position/close',{position_id:id}).then(p=>{document.getElementById('paper-order-result').textContent=JSON.stringify(p,null,2);loadPaperStatus()})}
+function settingsPayload(){return{paper_auto_trade_enabled:document.getElementById('setting-auto').value==='true',sizing_mode:document.getElementById('setting-sizing').value,fixed_quantity:Number(document.getElementById('setting-fixed-qty').value),fixed_amount:Number(document.getElementById('setting-fixed-amount').value),target_mode:document.getElementById('setting-target-mode').value,target_value:Number(document.getElementById('setting-target-value').value),stop_loss_mode:document.getElementById('setting-sl-mode').value,stop_loss_value:Number(document.getElementById('setting-sl-value').value),max_open_positions:Number(document.getElementById('setting-max-open').value),max_trades_per_day:Number(document.getElementById('setting-max-trades').value),max_daily_loss:Number(document.getElementById('setting-max-loss').value)}}function loadPaperSettings(){fetch('/api/paper/settings').then(r=>r.json()).then(p=>{const s=p.settings||p;document.getElementById('setting-auto').value=String(!!s.paper_auto_trade_enabled);document.getElementById('setting-sizing').value=s.sizing_mode;document.getElementById('setting-fixed-qty').value=s.fixed_quantity;document.getElementById('setting-fixed-amount').value=s.fixed_amount;document.getElementById('setting-target-mode').value=s.target_mode;document.getElementById('setting-target-value').value=s.target_value;document.getElementById('setting-sl-mode').value=s.stop_loss_mode;document.getElementById('setting-sl-value').value=s.stop_loss_value;document.getElementById('setting-max-open').value=s.max_open_positions;document.getElementById('setting-max-trades').value=s.max_trades_per_day;document.getElementById('setting-max-loss').value=s.max_daily_loss;renderKv('paper-auto-preview',p.auto_trade_preview||{},['state','sizing_mode','calculated_quantity','entry_price','generated_stop_loss','generated_target_1','generated_target_2','block_reasons']);document.getElementById('paper-settings-raw').textContent=JSON.stringify(p,null,2)})}function savePaperSettings(){postJson('/api/paper/settings',settingsPayload()).then(p=>{document.getElementById('paper-settings-raw').textContent=JSON.stringify(p,null,2);loadPaperStatus()})}
+function loadPaperStatus(isAuto=false){fetch('/api/paper/status').then(r=>r.json()).then(p=>{renderKv('paper-summary',p.account_summary,['mode','cash_balance','equity','realized_pnl','unrealized_pnl','win_count','loss_count','win_rate','paper_auto_trade_state','go_live_allowed']);document.getElementById('paper-open-positions').innerHTML=(p.open_positions||[]).map(pos=>`<div class="paper-row"><strong>${pos.symbol} ${pos.side} x${pos.quantity}</strong><br>Entry ${pos.entry_price} · LTP ${pos.last_price??'DATA_UNAVAILABLE'} · P&L <span class="${Number(pos.unrealized_pnl||0)>=0?'profit':'loss'}">${pos.unrealized_pnl}</span><br>SL ${pos.stop_loss} · T1 ${pos.target_1} · T2 ${pos.target_2}<br><button onclick="closePaperPosition('${pos.position_id}')">Manual Exit</button></div>`).join('')||'No open paper positions.';document.getElementById('paper-closed-trades').innerHTML=(p.closed_trades||[]).slice(-10).reverse().map(t=>`<div class="paper-row"><strong>${t.symbol} ${t.exit_reason}</strong><br>Entry ${t.entry_price} → Exit ${t.exit_price} · P&L <span class="${Number(t.pnl||0)>=0?'profit':'loss'}">${t.pnl}</span></div>`).join('')||'No closed paper trades.';document.getElementById('paper-ledger').innerHTML=(p.statement_ledger||[]).slice(-10).reverse().map(e=>`<div class="paper-row"><strong>${e.event}</strong><br>${e.timestamp}<br>${e.message}</div>`).join('')||'No ledger entries yet.';if(!isAuto)document.getElementById('paper-raw').textContent=JSON.stringify(p,null,2);loadPaperSettings()})}
+function loadShadowStatus(){fetch('/api/shadow/status').then(r=>r.json()).then(p=>{renderKv('shadow-status',p,['mode','zerodha_status','data_source','paper_orders','fills','realized_pnl','unrealized_pnl','total_equity','go_live_allowed']);document.getElementById('shadow-raw').textContent=JSON.stringify(p,null,2)})}
+fetch('/api/market/watchlist').then(r=>r.json()).then(renderWatchlist).catch(()=>renderWatchlist({symbols:marketSymbols}));refreshMarketData();loadChart();loadLiveSignal();loadPaperStatus();loadPaperSettings();loadLiveReadiness();loadShadowStatus();startAutoRefresh();
+</script></body></html>
 """
 
 
@@ -114,24 +94,35 @@ _SUBMITTED_IDEMPOTENCY_KEYS: set[str] = set()
 _LAST_QUOTES: dict[str, dict[str, Any]] = {}
 _PAPER_STARTING_BALANCE = 100_000.0
 _PAPER: dict[str, Any] = {}
+_PAPER_SETTINGS_DEFAULTS = {
+    "paper_auto_trade_enabled": False,
+    "sizing_mode": "FIXED_QUANTITY",
+    "fixed_quantity": 1,
+    "fixed_amount": 1000.0,
+    "target_mode": "PERCENT",
+    "target_value": 1.0,
+    "stop_loss_mode": "PERCENT",
+    "stop_loss_value": 0.5,
+    "max_open_positions": 1,
+    "max_trades_per_day": 5,
+    "max_daily_loss": 1000.0,
+    "go_live_allowed": False,
+}
+_PAPER_SETTINGS: dict[str, Any] = dict(_PAPER_SETTINGS_DEFAULTS)
 
 
-def _reset_paper_state(starting_balance: float = _PAPER_STARTING_BALANCE) -> None:
-    _PAPER.clear()
-    _PAPER.update({
-        "starting_balance": float(starting_balance),
-        "cash_balance": float(starting_balance),
-        "open_positions": [],
-        "closed_trades": [],
-        "statement_ledger": [],
-        "paper_auto_trade_enabled": False,
-        "paper_auto_trade_state": "OFF",
-    })
-    _paper_ledger("ACCOUNT_RESET", f"Virtual paper account reset to {starting_balance:.2f}")
+def _now() -> str:
+    return datetime.now(UTC).isoformat()
 
 
 def _paper_ledger(event: str, message: str, **extra: Any) -> None:
     _PAPER.setdefault("statement_ledger", []).append({"event": event, "message": message, "timestamp": _now(), "data_source": "PAPER_TRADING_SIMULATOR", **extra})
+
+
+def _reset_paper_state(starting_balance: float = _PAPER_STARTING_BALANCE) -> None:
+    _PAPER.clear()
+    _PAPER.update({"starting_balance": float(starting_balance), "cash_balance": float(starting_balance), "open_positions": [], "closed_trades": [], "statement_ledger": [], "paper_auto_trade_enabled": False, "paper_auto_trade_state": "OFF"})
+    _paper_ledger("ACCOUNT_RESET", f"Virtual paper account reset to {starting_balance:.2f}")
 
 
 _reset_paper_state()
@@ -140,7 +131,7 @@ _reset_paper_state()
 class AlphaGateXRequestHandler(BaseHTTPRequestHandler):
     """HTTP handler exposing ALPHA-GATE X dashboard and JSON endpoints."""
 
-    server_version = "AlphaGateXTradingTerminal/2.0"
+    server_version = "AlphaGateXTradingTerminal/2.1"
 
     def do_GET(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
@@ -149,12 +140,11 @@ class AlphaGateXRequestHandler(BaseHTTPRequestHandler):
         if path == "/":
             self._send(200, HTML, "text/html; charset=utf-8")
         elif path == "/health":
-            self._send_json(200, {"status": "ok", "service": "alpha-gate-x-trading-terminal"})
+            self._send_json(200, {"status": "ok", "service": "alpha-gate-x-shadow-trading-platform"})
         elif path == "/api/status":
             self._send_json(200, {"active_scope": "live_market_signal_paper_trading", "go_live_allowed": False})
         elif path == "/api/demo":
-            phases = [phase.as_dict() for phase in AegisQuantPlatform().run(_demo_bars())]
-            self._send_json(200, {"mode": "UI_PREVIEW_ONLY", "go_live_allowed": False, "phases": phases})
+            self._send_json(200, {"mode": "UI_PREVIEW_ONLY", "go_live_allowed": False, "phases": [phase.as_dict() for phase in AegisQuantPlatform().run(_demo_bars())]})
         elif path == "/api/shadow/status":
             self._send_json(200, _shadow_status())
         elif path == "/api/live/readiness":
@@ -177,6 +167,8 @@ class AlphaGateXRequestHandler(BaseHTTPRequestHandler):
             self._send_json(200, _paper_status())
         elif path == "/api/paper/statement":
             self._send_json(200, _paper_statement())
+        elif path == "/api/paper/settings":
+            self._send_json(200, _paper_settings_response())
         else:
             self._send_json(404, {"error": "not_found"})
 
@@ -201,6 +193,8 @@ class AlphaGateXRequestHandler(BaseHTTPRequestHandler):
             self._send_json(200, _paper_position_close(payload))
         elif path == "/api/paper/auto-trade/toggle":
             self._send_json(200, _paper_auto_trade_toggle(payload))
+        elif path == "/api/paper/settings":
+            self._send_json(200, _paper_settings_update(payload))
         else:
             self._send_json(404, {"error": "not_found"})
 
@@ -233,29 +227,16 @@ class AlphaGateXRequestHandler(BaseHTTPRequestHandler):
 
 
 def run(host: str = "127.0.0.1", port: int = 8080) -> None:
-    """Run the ALPHA-GATE X web app."""
     ThreadingHTTPServer((host, port), AlphaGateXRequestHandler).serve_forever()
 
 
 def _shadow_status() -> dict[str, Any]:
-    failure_reasons: list[str] = []
-    env = os.environ
-    missing_auth = tuple(key for key in ("ZERODHA_API_KEY", "ZERODHA_ACCESS_TOKEN") if not env.get(key, "").strip())
-    instrument_path = env.get("ZERODHA_INSTRUMENT_DUMP_PATH", "data/instruments.csv").strip() or "data/instruments.csv"
-    instruments_available = Path(instrument_path).exists() and Path(instrument_path).stat().st_size > 0
-    websocket_enabled = _env_true("ENABLE_ZERODHA_WEBSOCKET")
-    if missing_auth:
-        failure_reasons.append(f"missing Zerodha credentials: {', '.join(missing_auth)}")
-    if not instruments_available:
-        failure_reasons.append(f"instrument dump unavailable: {instrument_path}")
-    if not websocket_enabled:
-        failure_reasons.append("read-only Zerodha WebSocket disabled")
     audit_store = InMemoryAuditStore()
     engine = LivePaperTradingEngine(config=RuntimeConfig(), audit_store=audit_store)
     report = engine.build_report()
     shadow = ShadowRunValidator(audit_store).status()
     paper = _paper_status()["account_summary"]
-    return {"mode": engine.config.trading_mode.value, "go_live_allowed": False, "zerodha_status": "ZERODHA_UNAVAILABLE" if missing_auth else "READ_ONLY_READY", "data_source": "DATA_UNAVAILABLE" if failure_reasons else "RUNTIME_AUDIT_STORE", "signals_generated": report.signals_generated, "paper_orders": len(_PAPER.get("open_positions", [])) + len(_PAPER.get("closed_trades", [])), "fills": len(_PAPER.get("closed_trades", [])), "realized_pnl": paper["realized_pnl"], "unrealized_pnl": paper["unrealized_pnl"], "total_equity": paper["equity"], "shadow_days_completed": shadow.trading_days_completed, "shadow_recommendation": shadow.recommendation.value, "failure_reasons": tuple(failure_reasons + list(shadow.failure_reasons)), "ticker_wrapper_available": ReadOnlyKiteTickerWrapper is not None}
+    return {"mode": engine.config.trading_mode.value, "go_live_allowed": False, "zerodha_status": "READ_ONLY_READY" if os.environ.get("ZERODHA_API_KEY") and os.environ.get("ZERODHA_ACCESS_TOKEN") else "ZERODHA_UNAVAILABLE", "data_source": "RUNTIME_AUDIT_STORE", "signals_generated": report.signals_generated, "paper_orders": len(_PAPER.get("open_positions", [])) + len(_PAPER.get("closed_trades", [])), "fills": len(_PAPER.get("closed_trades", [])), "realized_pnl": paper["realized_pnl"], "unrealized_pnl": paper["unrealized_pnl"], "total_equity": paper["equity"], "shadow_days_completed": shadow.trading_days_completed, "shadow_recommendation": shadow.recommendation.value, "failure_reasons": tuple(shadow.failure_reasons), "ticker_wrapper_available": ReadOnlyKiteTickerWrapper is not None}
 
 
 def _live_readiness() -> dict[str, Any]:
@@ -290,7 +271,8 @@ def _live_order_preview(payload: Mapping[str, Any]) -> dict[str, Any]:
     if margin_check["status"] != "PASS": reasons.append(margin_check["reason"])
     preview = LiveOrderPreviewState(f"preview-{uuid4()}", f"live-preview:{uuid4()}", symbol, exchange, side, quantity, order_type, product, price, "PASS" if not reasons else "BLOCKED", not reasons, tuple(dict.fromkeys(reasons)))
     _PREVIEWS[preview.preview_id] = preview
-    result = asdict(preview); result["margin_check"] = margin_check
+    result = asdict(preview)
+    result["margin_check"] = margin_check
     return result
 
 
@@ -418,10 +400,84 @@ def _auto_trade_state(signal: Mapping[str, Any], *, auto_requested: bool) -> dic
     return {"requested": auto_requested, "state": "ARMED" if eligible else "BLOCKED" if auto_requested else "DISABLED", "eligible": eligible, "reason": "PASS" if eligible else "; ".join(dict.fromkeys(reasons)), "go_live_allowed": False}
 
 
+def _paper_settings_response(symbol: str = "RELIANCE") -> dict[str, Any]:
+    return {"settings": dict(_PAPER_SETTINGS), "auto_trade_preview": _paper_auto_trade_plan(symbol, None), "validation_status": "VALIDATED", "go_live_allowed": False}
+
+
+def _paper_settings_update(payload: Mapping[str, Any]) -> dict[str, Any]:
+    if "paper_auto_trade_enabled" in payload:
+        _PAPER_SETTINGS["paper_auto_trade_enabled"] = bool(payload.get("paper_auto_trade_enabled"))
+    if "enabled" in payload:
+        _PAPER_SETTINGS["paper_auto_trade_enabled"] = bool(payload.get("enabled"))
+    sizing_mode = str(payload.get("sizing_mode", _PAPER_SETTINGS["sizing_mode"])).upper()
+    if sizing_mode in {"FIXED_QUANTITY", "FIXED_AMOUNT"}:
+        _PAPER_SETTINGS["sizing_mode"] = sizing_mode
+    target_mode = str(payload.get("target_mode", _PAPER_SETTINGS["target_mode"])).upper()
+    if target_mode in {"PERCENT", "POINTS"}:
+        _PAPER_SETTINGS["target_mode"] = target_mode
+    stop_loss_mode = str(payload.get("stop_loss_mode", _PAPER_SETTINGS["stop_loss_mode"])).upper()
+    if stop_loss_mode in {"PERCENT", "POINTS"}:
+        _PAPER_SETTINGS["stop_loss_mode"] = stop_loss_mode
+    _PAPER_SETTINGS["fixed_quantity"] = max(1, _safe_int(payload.get("fixed_quantity", _PAPER_SETTINGS["fixed_quantity"]), 1))
+    _PAPER_SETTINGS["fixed_amount"] = max(0.0, _safe_float(payload.get("fixed_amount", _PAPER_SETTINGS["fixed_amount"]), 1000.0))
+    _PAPER_SETTINGS["target_value"] = max(0.0, _safe_float(payload.get("target_value", _PAPER_SETTINGS["target_value"]), 1.0))
+    _PAPER_SETTINGS["stop_loss_value"] = max(0.0, _safe_float(payload.get("stop_loss_value", _PAPER_SETTINGS["stop_loss_value"]), 0.5))
+    _PAPER_SETTINGS["max_open_positions"] = max(1, _safe_int(payload.get("max_open_positions", _PAPER_SETTINGS["max_open_positions"]), 1))
+    _PAPER_SETTINGS["max_trades_per_day"] = max(1, _safe_int(payload.get("max_trades_per_day", _PAPER_SETTINGS["max_trades_per_day"]), 5))
+    _PAPER_SETTINGS["max_daily_loss"] = max(0.0, _safe_float(payload.get("max_daily_loss", _PAPER_SETTINGS["max_daily_loss"]), 1000.0))
+    _PAPER["paper_auto_trade_enabled"] = bool(_PAPER_SETTINGS["paper_auto_trade_enabled"])
+    _PAPER["paper_auto_trade_state"] = "ARMED" if _PAPER["paper_auto_trade_enabled"] and not _kill_switch_active() else "OFF" if not _PAPER["paper_auto_trade_enabled"] else "BLOCKED"
+    _paper_ledger("PAPER_SETTINGS_UPDATE", "Paper auto-trade settings updated", settings=dict(_PAPER_SETTINGS))
+    return _paper_settings_response()
+
+
+def _paper_auto_trade_plan(symbol: str, signal: Mapping[str, Any] | None) -> dict[str, Any]:
+    settings = _PAPER_SETTINGS
+    quote = _LAST_QUOTES.get(symbol.upper())
+    entry = float(quote["ltp"]) if quote and quote.get("validation_status") == "VALIDATED" and isinstance(quote.get("ltp"), (int, float)) else 0.0
+    quantity = int(settings["fixed_quantity"]) if settings["sizing_mode"] == "FIXED_QUANTITY" else int(float(settings["fixed_amount"]) // entry) if entry > 0 else 0
+    target_1, target_2, stop_loss = _paper_generated_exits(entry)
+    reasons: list[str] = []
+    if not settings["paper_auto_trade_enabled"]: reasons.append("PAPER_AUTO_TRADE_OFF")
+    if signal is not None:
+        if signal.get("decision") != "BUY": reasons.append("SIGNAL_NOT_BUY")
+        if signal.get("validation_status") != "VALIDATED": reasons.append("SIGNAL_NOT_VALIDATED")
+        if _safe_float(signal.get("confidence_score"), 0.0) < 75: reasons.append("CONFIDENCE_BELOW_75")
+        if _safe_float(signal.get("risk_reward"), 0.0) < 2: reasons.append("RISK_REWARD_BELOW_2")
+    if quote is None or quote.get("validation_status") != "VALIDATED": reasons.append("VALIDATED_QUOTE_UNAVAILABLE")
+    if _kill_switch_active(): reasons.append("KILL_SWITCH_ENABLED")
+    if len(_PAPER.get("open_positions", [])) >= int(settings["max_open_positions"]): reasons.append("MAX_OPEN_POSITIONS_REACHED")
+    if _paper_trades_today() >= int(settings["max_trades_per_day"]): reasons.append("MAX_TRADES_PER_DAY_REACHED")
+    if _paper_daily_loss() >= float(settings["max_daily_loss"]): reasons.append("MAX_DAILY_LOSS_REACHED")
+    if quantity < 1: reasons.append("INSUFFICIENT_PAPER_AMOUNT")
+    if entry > 0 and quantity * entry > float(_PAPER.get("cash_balance", 0.0)): reasons.append("INSUFFICIENT_PAPER_BALANCE")
+    if any(p["symbol"] == symbol.upper() and p["side"] == "BUY" for p in _PAPER.get("open_positions", [])): reasons.append("DUPLICATE_OPEN_POSITION")
+    state = "ARMED" if not reasons else "OFF" if reasons == ["PAPER_AUTO_TRADE_OFF"] else "BLOCKED"
+    return {"state": state, "sizing_mode": settings["sizing_mode"], "calculated_quantity": quantity, "fixed_amount": settings["fixed_amount"], "fixed_quantity": settings["fixed_quantity"], "entry_price": round(entry, 2) if entry else DATA_UNAVAILABLE, "generated_stop_loss": stop_loss, "generated_target_1": target_1, "generated_target_2": target_2, "block_reasons": tuple(dict.fromkeys(reasons)), "go_live_allowed": False}
+
+
+def _paper_generated_exits(entry: float) -> tuple[float | str, float | str, float | str]:
+    if entry <= 0:
+        return DATA_UNAVAILABLE, DATA_UNAVAILABLE, DATA_UNAVAILABLE
+    target_value = float(_PAPER_SETTINGS["target_value"])
+    stop_value = float(_PAPER_SETTINGS["stop_loss_value"])
+    if _PAPER_SETTINGS["target_mode"] == "POINTS":
+        target_1 = entry + target_value
+        target_2 = entry + target_value * 2
+    else:
+        target_1 = entry * (1 + target_value / 100)
+        target_2 = entry * (1 + target_value * 2 / 100)
+    if _PAPER_SETTINGS["stop_loss_mode"] == "POINTS":
+        stop_loss = entry - stop_value
+    else:
+        stop_loss = entry * (1 - stop_value / 100)
+    return round(target_1, 2), round(target_2, 2), round(stop_loss, 2)
+
+
 def _paper_status() -> dict[str, Any]:
     _paper_mark_to_market()
     summary = _paper_summary()
-    return {"account_summary": summary, "open_positions": tuple(_PAPER.get("open_positions", [])), "closed_trades": tuple(_PAPER.get("closed_trades", [])), "statement_ledger": tuple(_PAPER.get("statement_ledger", [])), "validation_status": "VALIDATED", "data_source": "PAPER_TRADING_SIMULATOR", "timestamp": _now(), "go_live_allowed": False}
+    return {"account_summary": summary, "open_positions": tuple(_PAPER.get("open_positions", [])), "closed_trades": tuple(_PAPER.get("closed_trades", [])), "statement_ledger": tuple(_PAPER.get("statement_ledger", [])), "settings": dict(_PAPER_SETTINGS), "auto_trade_preview": _paper_auto_trade_plan("RELIANCE", None), "validation_status": "VALIDATED", "data_source": "PAPER_TRADING_SIMULATOR", "timestamp": _now(), "go_live_allowed": False}
 
 
 def _paper_statement() -> dict[str, Any]:
@@ -442,6 +498,7 @@ def _paper_balance_add(payload: Mapping[str, Any]) -> dict[str, Any]:
 def _paper_reset(payload: Mapping[str, Any] | None = None) -> dict[str, Any]:
     starting = _safe_float((payload or {}).get("starting_balance"), _PAPER_STARTING_BALANCE)
     _reset_paper_state(starting if starting > 0 else _PAPER_STARTING_BALANCE)
+    _PAPER_SETTINGS.update(dict(_PAPER_SETTINGS_DEFAULTS))
     return {"status": "PASS", "message": "paper account reset", "paper_status": _paper_status(), "go_live_allowed": False}
 
 
@@ -477,19 +534,13 @@ def _paper_position_close(payload: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _paper_auto_trade_toggle(payload: Mapping[str, Any]) -> dict[str, Any]:
-    enabled = bool(payload.get("enabled", False))
-    _PAPER["paper_auto_trade_enabled"] = enabled
-    _PAPER["paper_auto_trade_state"] = "ARMED" if enabled and not _kill_switch_active() else "OFF" if not enabled else "BLOCKED"
-    _paper_ledger("PAPER_AUTO_TRADE_TOGGLE", f"Paper auto-trade set to {_PAPER['paper_auto_trade_state']}", enabled=enabled)
-    return {"status": "PASS", "paper_auto_trade_state": _PAPER["paper_auto_trade_state"], "go_live_allowed": False}
+    return _paper_settings_update({"paper_auto_trade_enabled": bool(payload.get("enabled", False))})
 
 
 def _paper_open_long(symbol: str, quantity: int, price: float, payload: Mapping[str, Any], source: str, *, event: str) -> dict[str, Any]:
     cost = round(price * quantity, 2)
     if float(_PAPER.get("cash_balance", 0.0)) < cost:
         return {"status": "BLOCKED", "reason": "INSUFFICIENT_PAPER_BALANCE", "required_cash": cost, "cash_balance": _PAPER.get("cash_balance", 0.0), "go_live_allowed": False}
-    if any(p["symbol"] == symbol and p["side"] == "BUY" for p in _PAPER.get("open_positions", [])) and event == "PAPER_AUTO_BUY":
-        return {"status": "BLOCKED", "reason": "DUPLICATE_OPEN_PAPER_POSITION", "go_live_allowed": False}
     stop_loss = _safe_float(payload.get("stop_loss"), 0.0)
     target_1 = _safe_float(payload.get("target_1"), 0.0)
     target_2 = _safe_float(payload.get("target_2"), 0.0)
@@ -534,32 +585,13 @@ def _paper_evaluate_positions(symbol: str, last_price: float, source: str) -> No
 
 
 def _paper_auto_trade_from_signal(signal: Mapping[str, Any]) -> None:
-    if not _PAPER.get("paper_auto_trade_enabled", False):
-        _PAPER["paper_auto_trade_state"] = "OFF"
-        return
-    reasons: list[str] = []
-    decision = str(signal.get("decision", DATA_UNAVAILABLE))
     symbol = str(signal.get("symbol", "")).upper()
-    if _kill_switch_active(): reasons.append("kill switch enabled")
-    if decision not in {"BUY", "SELL"}: reasons.append("signal decision is not BUY/SELL")
-    if signal.get("validation_status") != "VALIDATED": reasons.append("signal not validated")
-    if _safe_float(signal.get("confidence_score"), 0.0) < 75: reasons.append("confidence below 75")
-    if _safe_float(signal.get("risk_reward"), 0.0) < 2: reasons.append("risk_reward below 2")
-    quote = _LAST_QUOTES.get(symbol)
-    if not quote or quote.get("validation_status") != "VALIDATED" or not isinstance(quote.get("ltp"), (int, float)):
-        reasons.append("validated quote unavailable")
-    if any(p["symbol"] == symbol and p["side"] == decision for p in _PAPER.get("open_positions", [])):
-        reasons.append("duplicate open position for symbol/side")
-    if reasons:
-        _PAPER["paper_auto_trade_state"] = "BLOCKED"
+    plan = _paper_auto_trade_plan(symbol, signal)
+    _PAPER["paper_auto_trade_state"] = plan["state"]
+    if plan["state"] != "ARMED":
         return
-    price = float(quote["ltp"])
-    payload = {"stop_loss": signal.get("stop_loss"), "target_1": signal.get("target_1"), "target_2": signal.get("target_2")}
-    if decision == "BUY":
-        _paper_open_long(symbol, 1, price, payload, "PAPER_AUTO_TRADE_FROM_SIGNAL", event="PAPER_AUTO_BUY")
-        _PAPER["paper_auto_trade_state"] = "ARMED"
-    else:
-        _PAPER["paper_auto_trade_state"] = "BLOCKED"
+    payload = {"stop_loss": plan["generated_stop_loss"], "target_1": plan["generated_target_1"], "target_2": plan["generated_target_2"]}
+    _paper_open_long(symbol, int(plan["calculated_quantity"]), float(plan["entry_price"]), payload, "PAPER_AUTO_TRADE_FROM_SIGNAL", event="PAPER_AUTO_BUY")
 
 
 def _paper_mark_to_market() -> None:
@@ -596,20 +628,29 @@ def _paper_find_position(position_id: str) -> dict[str, Any] | None:
     return next((p for p in _PAPER.get("open_positions", []) if p["position_id"] == position_id), None)
 
 
+def _paper_trades_today() -> int:
+    today = datetime.now(UTC).date().isoformat()
+    return sum(1 for trade in _PAPER.get("closed_trades", []) if str(trade.get("closed_at", "")).startswith(today)) + sum(1 for position in _PAPER.get("open_positions", []) if str(position.get("opened_at", "")).startswith(today))
+
+
+def _paper_daily_loss() -> float:
+    today = datetime.now(UTC).date().isoformat()
+    return round(abs(sum(float(trade.get("pnl", 0.0)) for trade in _PAPER.get("closed_trades", []) if str(trade.get("closed_at", "")).startswith(today) and float(trade.get("pnl", 0.0)) < 0)), 2)
+
+
 def _live_margin_check(symbol: str, exchange: str, side: str, quantity: int, order_type: str, price: float, product: str) -> dict[str, Any]:
     client, reason = _kite_client_from_env()
     if client is None:
         return {"status": "BLOCKED", "reason": reason, "required_margin": DATA_UNAVAILABLE, "available_margin": DATA_UNAVAILABLE, "go_live_allowed": False}
-    order = {"exchange": exchange, "tradingsymbol": symbol, "transaction_type": side, "variety": "regular", "product": product, "order_type": order_type, "quantity": quantity, "price": price}
     try:
         if not hasattr(client, "order_margins"):
             return {"status": "BLOCKED", "reason": "KITE_ORDER_MARGINS_METHOD_UNAVAILABLE", "go_live_allowed": False}
-        margin_response = client.order_margins([order])
+        margin_response = client.order_margins([{"exchange": exchange, "tradingsymbol": symbol, "transaction_type": side, "variety": "regular", "product": product, "order_type": order_type, "quantity": quantity, "price": price}])
         margin_row = margin_response[0] if isinstance(margin_response, list) and margin_response else margin_response
         required_margin = _extract_required_margin(margin_row)
         available_margin = _extract_available_margin(client.margins())
         if required_margin is None:
-            return {"status": "BLOCKED", "reason": "REQUIRED_MARGIN_UNAVAILABLE", "margin_response": margin_response, "available_margin": available_margin if available_margin is not None else DATA_UNAVAILABLE, "go_live_allowed": False}
+            return {"status": "BLOCKED", "reason": "REQUIRED_MARGIN_UNAVAILABLE", "go_live_allowed": False}
         if available_margin is None:
             return {"status": "BLOCKED", "reason": "AVAILABLE_MARGIN_UNAVAILABLE", "required_margin": required_margin, "go_live_allowed": False}
         if available_margin < required_margin:
@@ -759,10 +800,6 @@ def _safe_float(value: Any, default: float) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
-
-
-def _now() -> str:
-    return datetime.now(UTC).isoformat()
 
 
 def _as_text(value: Any) -> str:
