@@ -105,6 +105,17 @@ Phase 8 broker adapter safety foundation has been added:
 - Opt-in web_app patch script for broker health, broker quote, broker status, broker blocked mutation endpoints, and broker safety dashboard card.
 - Phase 8 tests.
 
+## Phase 9 status
+
+Phase 9 persistent kill switch foundation has been added:
+
+- PersistentKillSwitch module with local JSON state.
+- Storage path `.alpha_gate_state/kill_switch.json`.
+- Activate, reset, status, and fail-closed corrupt/unreadable handling.
+- Reset confirmation phrase `RESET_KILL_SWITCH`.
+- Opt-in web_app patch script for `/api/kill-switch/status`, `/api/kill-switch/activate`, `/api/kill-switch/reset`, risk integration, paper block, shadow block, and dashboard card.
+- Phase 9 tests.
+
 ## Phase order
 
 1. Safe config layer — **foundation added**
@@ -115,9 +126,7 @@ Phase 8 broker adapter safety foundation has been added:
 6. Paper trading hardening — **foundation added**
 7. Shadow trading — **foundation added**
 8. Broker adapter safety — **foundation added**
-9. Persistent kill switch
-   - Add durable kill switch state when storage exists.
-   - Block new orders when active.
+9. Persistent kill switch — **foundation added**
 10. Audit logs
    - Add structured events and recent logs UI/card.
 11. UI additions
@@ -138,5 +147,5 @@ Phase 8 broker adapter safety foundation has been added:
 
 ## Current recommended verdict
 
-Current status: SHADOW-READY + BROKER-SAFE candidate, still NO-GO for real-money trading.
-Next target: Persistent kill switch and durable audit logs.
+Current status: SHADOW-READY + BROKER-SAFE + PERSISTENT-SAFETY candidate, still NO-GO for real-money trading.
+Next target: Durable audit logs and operational evidence reports.
