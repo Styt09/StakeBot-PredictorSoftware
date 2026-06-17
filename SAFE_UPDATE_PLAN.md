@@ -93,6 +93,18 @@ Phase 7 shadow trading foundation has been added:
 - Opt-in web_app patch script for shadow endpoints and dashboard card.
 - Phase 7 tests.
 
+## Phase 8 status
+
+Phase 8 broker adapter safety foundation has been added:
+
+- BrokerAdapter protocol/interface.
+- ZerodhaReadOnlyAdapter for broker read-only operations.
+- BlockedBrokerMutationAdapter for fail-closed place/modify/cancel/exit methods.
+- BrokerHealthService with sanitized broker health output.
+- Secret masking/sanitization for broker read-only payloads.
+- Opt-in web_app patch script for broker health, broker quote, broker status, broker blocked mutation endpoints, and broker safety dashboard card.
+- Phase 8 tests.
+
 ## Phase order
 
 1. Safe config layer — **foundation added**
@@ -102,10 +114,7 @@ Phase 7 shadow trading foundation has been added:
 5. Risk engine — **foundation added**
 6. Paper trading hardening — **foundation added**
 7. Shadow trading — **foundation added**
-8. Broker adapter safety
-   - Add adapter interface.
-   - Add broker health endpoint.
-   - Keep broker mutation methods blocked by default.
+8. Broker adapter safety — **foundation added**
 9. Persistent kill switch
    - Add durable kill switch state when storage exists.
    - Block new orders when active.
@@ -129,5 +138,5 @@ Phase 7 shadow trading foundation has been added:
 
 ## Current recommended verdict
 
-Current status: SHADOW-READY candidate, still NO-GO for real-money trading.
-Next target: Broker adapter safety and broker health checks without broker mutation.
+Current status: SHADOW-READY + BROKER-SAFE candidate, still NO-GO for real-money trading.
+Next target: Persistent kill switch and durable audit logs.
