@@ -16,13 +16,13 @@ DOCS = [
     "SYSTEM_STATUS_SUMMARY.md",
 ]
 
-# Avoid false positives such as "risk-gate" while still detecting real secret-like values.
+# Avoid false positives such as "risk-gate" while still detecting real secret-like assignments.
 SECRET_PATTERNS = [
     re.compile(r"sk-(?:proj|live|test|svc|admin|org)[a-z0-9_-]{8,}", re.IGNORECASE),
-    re.compile(r"api[_-]?secret\s*=\s*[^\s`'"]+", re.IGNORECASE),
-    re.compile(r"access[_-]?token\s*=\s*[^\s`'"]+", re.IGNORECASE),
-    re.compile(r"request[_-]?token\s*=\s*[^\s`'"]+", re.IGNORECASE),
-    re.compile(r"password\s*=\s*[^\s`'"]+", re.IGNORECASE),
+    re.compile(r"api[_-]?secret\s*=\s*[^\s]+", re.IGNORECASE),
+    re.compile(r"access[_-]?token\s*=\s*[^\s]+", re.IGNORECASE),
+    re.compile(r"request[_-]?token\s*=\s*[^\s]+", re.IGNORECASE),
+    re.compile(r"password\s*=\s*[^\s]+", re.IGNORECASE),
 ]
 
 
