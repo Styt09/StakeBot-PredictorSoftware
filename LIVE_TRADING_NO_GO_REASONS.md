@@ -4,6 +4,10 @@ Current verdict: **NO-GO FOR REAL LIVE TRADING**.
 
 Real live order placement must remain disabled. The app may be used for read-only market data, signal review, paper trading, and staged shadow testing only.
 
+## Phase 1 confirmation
+
+Phase 1 added safe configuration defaults and secret masking. This does **not** make the app live-ready. `LIVE_ENABLED` must still be blocked unless the future safety stack is complete and `ENABLE_LIVE_TRADING=true` is explicitly configured in a controlled environment.
+
 ## Current NO-GO reasons
 
 1. **No complete centralized risk engine**
@@ -55,4 +59,5 @@ Real live order placement must remain disabled. The app may be used for read-onl
 - One-symbol, one-quantity controlled rollout plan.
 
 ## Safety rule
+
 Until these are complete, any live order endpoint must return `BLOCKED`, and `go_live_allowed` must remain `false`.
