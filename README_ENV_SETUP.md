@@ -1,6 +1,6 @@
 # ALPHA-GATE X Environment Setup
 
-This guide explains the safe Phase 1 configuration layer.
+This guide explains the safe configuration layer and read-only integrations.
 
 ## Create local `.env`
 
@@ -29,6 +29,29 @@ Fill only the values needed for local development. Do not commit `.env`.
 - `ZERODHA_USER_ID`
 
 These values are backend-only. Never place Zerodha secret or access token in frontend code, screenshots, browser local storage, or public logs.
+
+## OpenAI read-only auditor variables
+
+Phase 10 supports OpenAI as a read-only AI Safety Auditor and Error Doctor:
+
+```env
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-5.1-mini
+OPENAI_AUDITOR_ENABLED=true
+OPENAI_AUTOFIX_ENABLED=false
+AI_CAN_MODIFY_FILES=false
+AI_CAN_PLACE_ORDERS=false
+GO_LIVE_ALLOWED=false
+```
+
+Safety rules:
+
+- `OPENAI_API_KEY` must stay backend-only and must never be shared in chat, screenshots, frontend code, logs, or Git commits.
+- `OPENAI_AUTOFIX_ENABLED` stays `false`.
+- `AI_CAN_MODIFY_FILES` stays `false`.
+- `AI_CAN_PLACE_ORDERS` stays `false`.
+- `GO_LIVE_ALLOWED` stays `false`.
+- OpenAI can diagnose errors and audit signals, but cannot place broker orders, enable live trading, or fabricate missing market data.
 
 ## Risk limits
 
@@ -61,9 +84,13 @@ TRADING_MODE=PAPER
 ENABLE_LIVE_TRADING=false
 MARKET_TIMEZONE=Asia/Kolkata
 LOG_LEVEL=info
+OPENAI_AUTOFIX_ENABLED=false
+AI_CAN_MODIFY_FILES=false
+AI_CAN_PLACE_ORDERS=false
+GO_LIVE_ALLOWED=false
 ```
 
-PAPER and READ_ONLY should run even without Zerodha, database, or Redis credentials. Missing market data must show `DATA_UNAVAILABLE` and must not be fabricated.
+PAPER and READ_ONLY should run even without Zerodha, database, Redis, or OpenAI credentials. Missing market data must show `DATA_UNAVAILABLE` and must not be fabricated.
 
 ## Required before live trading can be considered
 
