@@ -57,16 +57,23 @@ Phase 4 signal safety foundation has been added:
 - Opt-in web_app patch script for `/api/signal/safe` and dashboard card.
 - Phase 4 tests.
 
+## Phase 5 status
+
+Phase 5 central risk engine foundation has been added:
+
+- Central `RiskEngine` and `RiskInput` model.
+- Required mode, market, instrument, data, signal, stop-loss, target, risk-reward, quantity, position, loss-limit, duplicate, cooldown, kill-switch, broker, and drift checks.
+- Fail-closed risk output with `go_live_allowed=false`.
+- Opt-in web_app patch script for `/api/risk/check`, dashboard card, and paper order pre-check.
+- Phase 5 tests.
+
 ## Phase order
 
 1. Safe config layer — **foundation added**
 2. Trading modes — **patch script added**
 3. Market data safety — **foundation added**
 4. Signal safety wrapper — **foundation added**
-5. Risk engine
-   - Add central risk checks.
-   - Run risk checks before paper and shadow orders first.
-   - Keep real-money actions blocked by default.
+5. Risk engine — **foundation added**
 6. Paper trading hardening
    - Preserve current paper trading.
    - Add order lifecycle, slippage placeholder, and audit events.
@@ -101,5 +108,5 @@ Phase 4 signal safety foundation has been added:
 ## Current recommended verdict
 
 Current status: PAPER-FOUNDATION, still NO-GO for real-money trading.
-Near-term target: PAPER-READY.
+Near-term target: PAPER-READY after paper order lifecycle/audit hardening.
 Next target: SHADOW-READY after live-data shadow reports.
