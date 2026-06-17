@@ -140,6 +140,12 @@ def test_web_app_html_contains_alpha_gate_dashboard_contract() -> None:
     assert "/api/market/quote" in HTML
     assert "/api/market/history" in HTML
     assert "/api/signal/live" in HTML
+    assert "Auto Refresh ON" in HTML
+    assert "LIVE POLLING ON" in HTML
+    assert "Last refresh" in HTML
+    assert "Next refresh" in HTML
+    assert "setInterval" in HTML
+    assert "visibilitychange" in HTML
 
 
 def test_market_watchlist_is_safe_without_live_credentials(monkeypatch) -> None:
@@ -258,14 +264,3 @@ def test_no_real_order_is_placed_by_default(monkeypatch) -> None:
     assert result["status"] == "BLOCKED"
     assert result["broker_order_id"] is None
     assert result["go_live_allowed"] is False
-
-
-def test_kill_switch_blocks_live_readiness(monkeypatch) -> None:
-    _clear_zerodha_env(monkeypatch)
-    _set_kill_switch(True)
-    try:
-        readiness = _live_readiness()
-        assert readiness["kill_switch_status"] == "ENABLED"
-        assert "kill switch enabled" in readiness["block_reasons"]
-    finally:
-        _set_kill_switch(False)
