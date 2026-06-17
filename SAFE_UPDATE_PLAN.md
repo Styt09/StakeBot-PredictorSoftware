@@ -116,6 +116,18 @@ Phase 9 persistent kill switch foundation has been added:
 - Opt-in web_app patch script for `/api/kill-switch/status`, `/api/kill-switch/activate`, `/api/kill-switch/reset`, risk integration, paper block, shadow block, and dashboard card.
 - Phase 9 tests.
 
+## Phase 10 status
+
+Phase 10 durable audit logs and evidence reports foundation has been added:
+
+- DurableAuditLog and AuditEvent module.
+- Storage path `.alpha_gate_state/audit_log.jsonl`.
+- JSONL event writing, recent reads, export, and summary reports.
+- Secret sanitization before persistence.
+- Corrupt-line handling as `AUDIT_LINE_UNREADABLE`.
+- Opt-in web_app patch script for `/api/audit/recent`, `/api/audit/report`, `/api/audit/export`, startup logging, broker health logging, and live-order-block logging.
+- Phase 10 tests.
+
 ## Phase order
 
 1. Safe config layer — **foundation added**
@@ -127,8 +139,7 @@ Phase 9 persistent kill switch foundation has been added:
 7. Shadow trading — **foundation added**
 8. Broker adapter safety — **foundation added**
 9. Persistent kill switch — **foundation added**
-10. Audit logs
-   - Add structured events and recent logs UI/card.
+10. Durable audit logs — **foundation added**
 11. UI additions
    - Add cards only; do not remove old design.
    - Show mode, data health, broker health, kill switch, risk block, PnL, and positions.
@@ -147,5 +158,5 @@ Phase 9 persistent kill switch foundation has been added:
 
 ## Current recommended verdict
 
-Current status: SHADOW-READY + BROKER-SAFE + PERSISTENT-SAFETY candidate, still NO-GO for real-money trading.
-Next target: Durable audit logs and operational evidence reports.
+Current status: SHADOW-READY + BROKER-SAFE + PERSISTENT-SAFETY + AUDIT-EVIDENCE candidate, still NO-GO for real-money trading.
+Next target: operational validation reports and final readiness gates.
