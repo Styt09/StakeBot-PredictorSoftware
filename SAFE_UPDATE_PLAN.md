@@ -44,15 +44,25 @@ Phase 3 market data safety foundation has been added:
 - Opt-in web_app patch script for `/api/market-data/health` and dashboard card.
 - Phase 3 tests.
 
+## Phase 4 status
+
+Phase 4 signal safety foundation has been added:
+
+- Safe signal wrapper preserving existing signal logic.
+- Standard safe signal format.
+- Confidence grade.
+- Explicit blocked reasons.
+- Stale/missing data fail-closed behavior.
+- BUY/SELL checks for stop-loss, targets, risk-reward, and confidence.
+- Opt-in web_app patch script for `/api/signal/safe` and dashboard card.
+- Phase 4 tests.
+
 ## Phase order
 
 1. Safe config layer — **foundation added**
 2. Trading modes — **patch script added**
 3. Market data safety — **foundation added**
-4. Signal safety wrapper
-   - Preserve existing signal logic.
-   - Add standard safe signal output.
-   - Add blocked_reasons and confidence grade.
+4. Signal safety wrapper — **foundation added**
 5. Risk engine
    - Add central risk checks.
    - Run risk checks before paper and shadow orders first.
