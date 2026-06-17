@@ -4,6 +4,7 @@
 .env_backups/
 .alpha_gate_state/
 .alpha_gate_backups/
+shadow_evidence/
 __pycache__/
 .pytest_cache/
 
