@@ -1,0 +1,40 @@
+name: Apply Final Legacy Fixes
+
+on:
+  push:
+    branches:
+      - fix/final-paper-pwa
+    paths:
+      - scripts/apply_final_legacy_fixes.py
+      - .github/workflows/apply-final-legacy-fixes.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-paper-pwa
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply deterministic patch
+        run: python scripts/apply_final_legacy_fixes.py
+      - name: Verify compile
+        run: python -m compileall -q src
+      - name: Commit patched files
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/institutional_trading_platform/web_app.py src/institutional_trading_platform/market_data_safety.py src/institutional_trading_platform/premium_dashboard.py
+          git commit -m "Apply final legacy paper compatibility fixes"
+          git push origin HEAD:fix/final-paper-pwa
