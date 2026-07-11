@@ -62,7 +62,7 @@ PREMIUM_DASHBOARD_HTML = r'''<!doctype html>
         </div>
         <div class="warning">
           <h3>LIVE: NO-GO</h3>
-          <p class="tiny">Real Zerodha orders remain blocked. This UI is frontend-only and uses PAPER / SHADOW validation. No real-order control is provided.</p>
+          <p class="tiny">Real Zerodha orders remain blocked. This UI is frontend-only and uses PAPER / SHADOW validation. No real-order control is provided. Read-only broker access only.</p>
           <div class="kv"><div><strong>Real Order Status</strong>BLOCKED</div><div><strong>Broker Mode</strong>READ-ONLY</div></div>
         </div>
       </div>

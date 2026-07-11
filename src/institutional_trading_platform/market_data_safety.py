@@ -71,10 +71,19 @@ class ExistingDataProvider:
         self._history_fetcher = history_fetcher
 
     def quote(self, symbol: str) -> Mapping[str, Any]:
-        return self._quote_fetcher(symbol)
+        normalized = (symbol or "RELIANCE").strip().upper()
+        payload = dict(self._quote_fetcher(normalized) or {})
+        payload.setdefault("symbol", normalized)
+        payload.setdefault("go_live_allowed", False)
+        return payload
 
     def history(self, symbol: str, interval: str = "5minute") -> Mapping[str, Any]:
-        return self._history_fetcher(symbol, interval=interval)
+        normalized = (symbol or "RELIANCE").strip().upper()
+        payload = dict(self._history_fetcher(normalized, interval=interval) or {})
+        payload.setdefault("symbol", normalized)
+        payload.setdefault("interval", interval)
+        payload.setdefault("go_live_allowed", False)
+        return payload
 
 
 class MarketDataHealthService:
