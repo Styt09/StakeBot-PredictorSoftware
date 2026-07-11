@@ -1,0 +1,33 @@
+name: Paper Final Diagnostic
+
+on:
+  push:
+    branches:
+      - fix/final-paper-pwa
+  workflow_dispatch:
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package
+        run: python -m pip install -e . pytest
+      - name: Run tests and capture output
+        shell: bash
+        run: |
+          set +e
+          pytest -q > paper-test.log 2>&1
+          code=$?
+          echo "$code" > paper-test-exit-code.txt
+          exit 0
+      - name: Upload diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper-test-diagnostic
+          path: |
+            paper-test.log
+            paper-test-exit-code.txt
