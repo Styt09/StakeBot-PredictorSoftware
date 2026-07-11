@@ -530,9 +530,11 @@ def _paper_auto_trade_plan(symbol: str, signal: Mapping[str, Any] | None) -> dic
     if _paper_daily_loss() >= float(settings["max_daily_loss"]): reasons.append("MAX_DAILY_LOSS_REACHED")
     if quantity < 1: reasons.append("INSUFFICIENT_PAPER_AMOUNT")
     if entry > 0 and quantity * entry > float(_PAPER.get("cash_balance", 0.0)): reasons.append("INSUFFICIENT_PAPER_BALANCE")
-    if any(p["symbol"] == symbol and p["side"] == "BUY" for p in _PAPER.get("open_positions", [])): reasons.append("DUPLICATE_OPEN_POSITION")
+    if any(p["symbol"] == symbol and p["side"] == "BUY" for p in _PAPER.get("open_positions", [])):
+        reasons.append("AUTO_SCALE_IN_OFF")
+        reasons.append("DUPLICATE_OPEN_POSITION")
     state = "ARMED" if not reasons else "OFF" if reasons == ["PAPER_AUTO_TRADE_OFF"] else "BLOCKED"
-    return {"state": state, "selected_symbol": symbol, "latest_ltp": round(entry, 2) if entry else DATA_UNAVAILABLE, "sizing_mode": settings["sizing_mode"], "calculated_quantity": quantity, "fixed_amount": settings["fixed_amount"], "fixed_quantity": settings["fixed_quantity"], "entry_price": round(entry, 2) if entry else DATA_UNAVAILABLE, "generated_stop_loss": stop_loss, "generated_target_1": target_1, "generated_target_2": target_2, "block_reasons": tuple(dict.fromkeys(reasons)), "go_live_allowed": False}
+    return {"requested": bool(settings["paper_auto_trade_enabled"]), "state": state, "selected_symbol": symbol, "latest_ltp": round(entry, 2) if entry else DATA_UNAVAILABLE, "sizing_mode": settings["sizing_mode"], "calculated_quantity": quantity, "fixed_amount": settings["fixed_amount"], "fixed_quantity": settings["fixed_quantity"], "entry_price": round(entry, 2) if entry else DATA_UNAVAILABLE, "generated_stop_loss": stop_loss, "generated_target_1": target_1, "generated_target_2": target_2, "block_reasons": tuple(dict.fromkeys(reasons)), "go_live_allowed": False}
 
 
 def _paper_generated_exits(entry: float) -> tuple[float | str, float | str, float | str]:
@@ -575,15 +577,59 @@ def _paper_order(payload: Mapping[str, Any]) -> dict[str, Any]:
     symbol = str(payload.get("symbol", "RELIANCE")).strip().upper()
     side = str(payload.get("side", "BUY")).strip().upper()
     quantity = _safe_int(payload.get("quantity"), 0)
-    if quantity <= 0: return {"status": "BLOCKED", "reason": "quantity must be positive", "go_live_allowed": False}
+    if quantity <= 0:
+        return {"status": "BLOCKED", "reason": "quantity must be positive", "go_live_allowed": False}
     price, source = _paper_execution_price(symbol, payload)
-    if price <= 0: return {"status": "BLOCKED", "reason": "validated quote unavailable and entry_price missing", "go_live_allowed": False}
-    if side == "BUY": return _paper_open_long(symbol, quantity, price, payload, source, event="PAPER_BUY")
+    if price <= 0:
+        return {"status": "BLOCKED", "reason": "validated quote unavailable and entry_price missing", "go_live_allowed": False}
+    if side == "BUY":
+        return _paper_open_long(symbol, quantity, price, payload, source, event="PAPER_BUY")
     if side == "SELL":
         open_long = next((p for p in _PAPER.get("open_positions", []) if p["symbol"] == symbol and p["side"] == "BUY"), None)
-        if open_long is None: return {"status": "BLOCKED", "reason": "SELL opens short only when explicitly supported; no matching long paper position found", "go_live_allowed": False}
+        if open_long is None:
+            return {"status": "BLOCKED", "reason": "SELL opens short only when explicitly supported; no matching long paper position found", "go_live_allowed": False}
+        open_quantity = int(open_long["quantity"])
+        if quantity > open_quantity:
+            return {"status": "BLOCKED", "reason": "SELL_QUANTITY_EXCEEDS_OPEN_LONG", "requested_quantity": quantity, "open_quantity": open_quantity, "go_live_allowed": False}
+        if quantity < open_quantity:
+            return _paper_partial_close_long(open_long["position_id"], quantity, price, "MANUAL_PARTIAL_EXIT", source)
         return _paper_close_position(open_long["position_id"], price, "MANUAL_EXIT", source)
     return {"status": "BLOCKED", "reason": "side must be BUY or SELL", "go_live_allowed": False}
+
+
+def _paper_partial_close_long(position_id: str, quantity: int, exit_price: float, exit_reason: str, source: str) -> dict[str, Any]:
+    position = _paper_find_position(position_id)
+    if position is None:
+        return {"status": "BLOCKED", "reason": "position_id not found", "go_live_allowed": False}
+    open_quantity = int(position["quantity"])
+    if quantity <= 0 or quantity >= open_quantity:
+        return {"status": "BLOCKED", "reason": "partial quantity must be between 1 and open quantity - 1", "go_live_allowed": False}
+    entry = float(position["entry_price"])
+    pnl = round((exit_price - entry) * quantity, 2)
+    proceeds = round(exit_price * quantity, 2)
+    remaining = open_quantity - quantity
+    _PAPER["cash_balance"] = round(float(_PAPER.get("cash_balance", 0.0)) + proceeds, 2)
+    position["quantity"] = remaining
+    position["last_price"] = round(exit_price, 2)
+    position["unrealized_pnl"] = round((exit_price - entry) * remaining, 2)
+    partial_trade = {
+        "position_id": position_id,
+        "symbol": position["symbol"],
+        "side": position["side"],
+        "quantity": quantity,
+        "entry_price": round(entry, 2),
+        "exit_price": round(exit_price, 2),
+        "exit_reason": exit_reason,
+        "opened_at": position.get("opened_at"),
+        "closed_at": _now(),
+        "pnl": pnl,
+        "data_source": source,
+        "status": "PARTIALLY_CLOSED",
+        "go_live_allowed": False,
+    }
+    _PAPER.setdefault("closed_trades", []).append(partial_trade)
+    _paper_ledger(exit_reason, f"Partially closed virtual {position['symbol']} x{quantity} @ {exit_price:.2f}; P&L {pnl:.2f}", position_id=position_id, symbol=position["symbol"], quantity=quantity, pnl=pnl)
+    return {"status": "PASS", "partial_trade": partial_trade, "paper_order": position, "paper_status": _paper_status(), "go_live_allowed": False}
 
 
 def _paper_position_close(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -600,9 +646,46 @@ def _paper_auto_trade_toggle(payload: Mapping[str, Any]) -> dict[str, Any]:
 
 def _paper_open_long(symbol: str, quantity: int, price: float, payload: Mapping[str, Any], source: str, *, event: str) -> dict[str, Any]:
     cost = round(price * quantity, 2)
-    if float(_PAPER.get("cash_balance", 0.0)) < cost: return {"status": "BLOCKED", "reason": "INSUFFICIENT_PAPER_BALANCE", "required_cash": cost, "cash_balance": _PAPER.get("cash_balance", 0.0), "go_live_allowed": False}
-    position = {"position_id": f"paper-{uuid4()}", "symbol": symbol, "side": "BUY", "quantity": quantity, "entry_price": round(price, 2), "stop_loss": round(_safe_float(payload.get("stop_loss"), 0.0), 2), "target_1": round(_safe_float(payload.get("target_1"), 0.0), 2), "target_2": round(_safe_float(payload.get("target_2"), 0.0), 2), "opened_at": _now(), "data_source": source, "status": "OPEN", "last_price": round(price, 2), "unrealized_pnl": 0.0, "go_live_allowed": False}
+    if float(_PAPER.get("cash_balance", 0.0)) < cost:
+        return {"status": "BLOCKED", "reason": "INSUFFICIENT_PAPER_BALANCE", "required_cash": cost, "cash_balance": _PAPER.get("cash_balance", 0.0), "go_live_allowed": False}
+
+    existing = next((p for p in _PAPER.get("open_positions", []) if p["symbol"] == symbol and p["side"] == "BUY"), None)
     _PAPER["cash_balance"] = round(float(_PAPER.get("cash_balance", 0.0)) - cost, 2)
+
+    if existing is not None:
+        old_quantity = int(existing["quantity"])
+        old_entry = float(existing["entry_price"])
+        new_quantity = old_quantity + quantity
+        average_price = round(((old_entry * old_quantity) + (price * quantity)) / new_quantity, 2)
+        existing["quantity"] = new_quantity
+        existing["entry_price"] = average_price
+        existing["last_price"] = round(price, 2)
+        existing["lot_count"] = int(existing.get("lot_count", 1)) + 1
+        existing["unrealized_pnl"] = round((price - average_price) * new_quantity, 2)
+        for key in ("stop_loss", "target_1", "target_2"):
+            value = _safe_float(payload.get(key), 0.0)
+            if value > 0:
+                existing[key] = round(value, 2)
+        _paper_ledger("PAPER_BUY_SCALE_IN", f"Added virtual BUY lot {quantity} {symbol} @ {price:.2f}; average {average_price:.2f}", position_id=existing["position_id"], symbol=symbol, quantity=quantity, price=price, average_price=average_price)
+        return {"status": "PASS", "paper_order": existing, "paper_status": _paper_status(), "go_live_allowed": False}
+
+    position = {
+        "position_id": f"paper-{uuid4()}",
+        "symbol": symbol,
+        "side": "BUY",
+        "quantity": quantity,
+        "entry_price": round(price, 2),
+        "stop_loss": round(_safe_float(payload.get("stop_loss"), 0.0), 2),
+        "target_1": round(_safe_float(payload.get("target_1"), 0.0), 2),
+        "target_2": round(_safe_float(payload.get("target_2"), 0.0), 2),
+        "opened_at": _now(),
+        "data_source": source,
+        "status": "OPEN",
+        "last_price": round(price, 2),
+        "unrealized_pnl": 0.0,
+        "lot_count": 1,
+        "go_live_allowed": False,
+    }
     _PAPER.setdefault("open_positions", []).append(position)
     _paper_ledger(event, f"Opened virtual BUY {quantity} {symbol} @ {price:.2f}", position_id=position["position_id"], symbol=symbol, quantity=quantity, price=price)
     return {"status": "PASS", "paper_order": position, "paper_status": _paper_status(), "go_live_allowed": False}
@@ -654,11 +737,13 @@ def _paper_summary() -> dict[str, Any]:
 
 
 def _paper_execution_price(symbol: str, payload: Mapping[str, Any]) -> tuple[float, str]:
+    entered = _safe_float(payload.get("limit_price") or payload.get("entry_price") or payload.get("price"), 0.0)
+    if entered > 0:
+        return entered, "USER_ENTERED_PAPER_PRICE"
     quote = _LAST_QUOTES.get(symbol)
     if quote and quote.get("validation_status") == "VALIDATED" and isinstance(quote.get("ltp"), (int, float)):
         return float(quote["ltp"]), "ZERODHA_KITE_QUOTE" if quote.get("data_source") != "TEST_QUOTE" else "TEST_QUOTE"
-    entry = _safe_float(payload.get("entry_price") or payload.get("price"), 0.0)
-    return entry, "USER_ENTERED_PAPER_PRICE" if entry > 0 else DATA_UNAVAILABLE
+    return 0.0, DATA_UNAVAILABLE
 
 
 def _paper_find_position(position_id: str) -> dict[str, Any] | None:
